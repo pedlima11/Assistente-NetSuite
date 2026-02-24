@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "NetSuite Setup Assistant",
+  "version": "1.0.0",
+  "description": "Automatiza a implantacao do NetSuite a partir de arquivos financeiros",
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://*.suitetalk.api.netsuite.com/*",
+    "https://*.restlets.api.netsuite.com/*",
+    "https://api.anthropic.com/*"
+  ],
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "NetSuite Setup Assistant",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
