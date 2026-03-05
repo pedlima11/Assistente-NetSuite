@@ -9,7 +9,23 @@
       "Bash(node:*)",
       "Bash(NODE_OPTIONS=\"--use-system-ca\" npm install:*)",
       "Bash(npm run build:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(pdftoppm -v)",
+      "Bash(pdftotext \"/Users/pedrolima/Desktop/Assistente_NetSuite/Docs_aux/BrazilLocalization_pt_BR.pdf\" -)",
+      "mcp__claude_ai_NetSuite_Ai_std__ns_getRecord",
+      "Bash(lsof -ti:3001)",
+      "Bash(xargs kill -9)",
+      "Bash(lsof -ti:5173)",
+      "Bash(lsof -ti:5174)",
+      "Bash(npm run dev)",
+      "mcp__claude_ai_WMS__ns_runCustomSuiteQL",
+      "mcp__claude_ai_NetSuite_Ai_std__ns_listSavedSearches",
+      "Bash(npx vite build)",
+      "mcp__claude_ai_NetSuite_Ai_std__ns_runCustomSuiteQL",
+      "Bash(timeout 8 npm run dev:client)",
+      "Bash(gtimeout 8 npm run dev:client)",
+      "Bash(git remote add origin https://github.com/pedlima11/Assistente-NetSuite.git)",
+      "Bash(git add -A)"
     ]
   }
 }

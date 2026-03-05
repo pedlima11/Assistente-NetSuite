@@ -5,13 +5,19 @@ const ACCEPTED_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/vnd.ms-excel',
 ];
-const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls'];
+const ACCEPTED_EXTENSIONS = ['.xlsx', '.xls', '.csv'];
 
 /**
  * Componente drag & drop para upload de arquivos Excel
- * @param {{ onFileSelected: (file: File) => void }} props
+ * @param {Object} props
+ * @param {(file: File) => void} props.onFileSelected
+ * @param {string} [props.accept] - Extensoes aceitas (ex: '.xlsx,.xls,.csv')
+ * @param {string} [props.subtitle] - Texto secundario da drop zone
  */
-export default function FileUploader({ onFileSelected }) {
+export default function FileUploader({ onFileSelected, accept, subtitle }) {
+  const effectiveAccept = accept || '.xlsx,.xls,.csv';
+  const effectiveSubtitle = subtitle || 'Formatos aceitos: .xlsx, .xls, .csv';
+  const effectiveExtensions = effectiveAccept.split(',').map(e => e.trim().toLowerCase());
   const [dragOver, setDragOver] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [error, setError] = useState('');
@@ -19,8 +25,8 @@ export default function FileUploader({ onFileSelected }) {
 
   function validateFile(file) {
     const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'));
-    if (!ACCEPTED_EXTENSIONS.includes(ext)) {
-      return 'Formato invalido. Aceitos: .xlsx, .xls';
+    if (!effectiveExtensions.includes(ext)) {
+      return `Formato invalido. Aceitos: ${effectiveAccept}`;
     }
     if (file.size > 50 * 1024 * 1024) {
       return 'Arquivo muito grande (max 50MB)';
@@ -74,21 +80,21 @@ export default function FileUploader({ onFileSelected }) {
         onDragLeave={handleDragLeave}
         onClick={() => inputRef.current?.click()}
         className={`
-          border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+          border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors
           ${dragOver ? 'border-ocean-120 bg-ocean-10' : 'border-ocean-30 hover:border-ocean-60'}
         `}
       >
         <Upload className="w-8 h-8 text-ocean-60 mx-auto mb-2" />
         <p className="text-sm text-ocean-150">
-          Arraste seu arquivo .xlsx aqui ou clique para selecionar
+          Arraste seu arquivo aqui ou clique para selecionar
         </p>
         <p className="text-xs text-ocean-60 mt-1">
-          Balanco Patrimonial ou Balancete
+          {effectiveSubtitle}
         </p>
         <input
           ref={inputRef}
           type="file"
-          accept=".xlsx,.xls"
+          accept={effectiveAccept}
           onChange={handleInputChange}
           className="hidden"
         />

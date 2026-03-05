@@ -1,4 +1,4 @@
-import { sendToBackground } from '../utils/chrome-messaging.js';
+import { sendToBackground } from '../utils/api-client.js';
 import { MessageType } from '../types/messages.js';
 
 const MAX_RETRIES = 3;

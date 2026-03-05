@@ -1,4 +1,4 @@
-import { AccountType } from './netsuite.js';
+import { AccountType, GeneralRateType } from './netsuite.js';
 
 /**
  * @typedef {Object} Account
@@ -8,6 +8,8 @@ import { AccountType } from './netsuite.js';
  * @property {string|null} parent - Numero da conta pai
  * @property {number} level - Nivel hierarquico (0 = raiz)
  * @property {string|null} subsidiaryId - InternalId da subsidiary no NetSuite
+ * @property {boolean} isSummary - Conta consolidadora (nao recebe lancamentos diretos)
+ * @property {string} generalRateType - Tipo de taxa geral para conversao cambial (Current/Average/Historical)
  */
 
 /**
@@ -22,5 +24,7 @@ export function createAccountTemplate() {
     parent: null,
     level: 0,
     subsidiaryId: null,
+    isSummary: false,
+    generalRateType: GeneralRateType.Current,
   };
 }

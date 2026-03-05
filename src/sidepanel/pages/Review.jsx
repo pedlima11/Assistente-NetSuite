@@ -1,17 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, AlertTriangle, Loader2, Building2, Plus, List } from 'lucide-react';
-import SubsidiaryPreview from '../components/SubsidiaryPreview.jsx';
-import ChartOfAccountsPreview from '../components/ChartOfAccountsPreview.jsx';
-import { ChartOfAccountsMapper } from '../../services/coa-mapper.js';
-import { sendToBackground } from '../../utils/chrome-messaging.js';
+import { ArrowLeft, ArrowRight, Loader2, Building2, Plus, List } from 'lucide-react';
+import SubsidiaryBuilder from '../components/SubsidiaryBuilder.jsx';
+import CoaModeler from '../components/CoaModeler.jsx';
+import { sendToBackground } from '../../utils/api-client.js';
 import { MessageType } from '../../types/messages.js';
+import { computeImportKey } from '../../utils/progress-store.js';
 
 export default function Review() {
   const navigate = useNavigate();
-  const [subsidiary, setSubsidiary] = useState(null);
-  const [accounts, setAccounts] = useState([]);
-  const [validationErrors, setValidationErrors] = useState([]);
+  const [initialSubsidiary, setInitialSubsidiary] = useState(null);
+  const [subsidiaryNodes, setSubsidiaryNodes] = useState([]);
+  const [nodesValid, setNodesValid] = useState(false);
+  const [rawAccounts, setRawAccounts] = useState([]);
+  const [exportedAccounts, setExportedAccounts] = useState([]);
+  const [coaReady, setCoaReady] = useState(false);
 
   // Subsidiary mode: 'create' (nova) ou 'existing' (selecionar existente)
   const [mode, setMode] = useState('create');
@@ -20,26 +23,34 @@ export default function Review() {
   const [loadingSubs, setLoadingSubs] = useState(false);
   const [lookupData, setLookupData] = useState(null);
   const [loadingLookup, setLoadingLookup] = useState(true);
+  const [existingAccounts, setExistingAccounts] = useState(new Map());
+
+  // Flag: modo subsidiary-only (sem plano de contas)
+  const [subsidiaryOnly, setSubsidiaryOnly] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     const raw = sessionStorage.getItem('reviewData');
-    if (!raw) {
+    const isSubsidiaryOnly = sessionStorage.getItem('subsidiaryOnly') === 'true';
+
+    if (!raw && isSubsidiaryOnly) {
+      setSubsidiaryOnly(true);
+      setInitialSubsidiary({ name: '', cnpj: '', ie: '', address: '', addressNumber: '', city: '', state: '', zipCode: '' });
+      setRawAccounts([]);
+    } else if (!raw) {
       navigate('/upload');
       return;
+    } else {
+      try {
+        const data = JSON.parse(raw);
+        setInitialSubsidiary(data.subsidiary);
+        setRawAccounts(data.accounts || []);
+      } catch {
+        navigate('/upload');
+        return;
+      }
     }
 
-    try {
-      const data = JSON.parse(raw);
-      setSubsidiary(data.subsidiary);
-
-      const mapped = ChartOfAccountsMapper.mapAccounts(data.accounts);
-      const sorted = ChartOfAccountsMapper.topologicalSort(mapped);
-      setAccounts(sorted);
-    } catch {
-      navigate('/upload');
-    }
-
-    // Carregar dados de referencia do NetSuite via RESTlet
     fetchLookupData();
   }, [navigate]);
 
@@ -57,6 +68,24 @@ export default function Review() {
         if (data.subsidiaries.length > 0) {
           setSelectedSubsidiaryId(data.subsidiaries[0].id);
         }
+      }
+
+      // Buscar contas existentes no NetSuite
+      try {
+        const acctResult = await sendToBackground({
+          type: 'SUITEQL_QUERY',
+          sql: `SELECT id, acctnumber, acctname FROM account WHERE isinactive = 'F'`,
+          limit: 5000,
+        });
+        if (acctResult?.items?.length > 0) {
+          const map = new Map();
+          acctResult.items.forEach((r) => {
+            if (r.acctnumber) map.set(r.acctnumber, r);
+          });
+          setExistingAccounts(map);
+        }
+      } catch (acctErr) {
+        console.warn('Nao foi possivel buscar contas existentes:', acctErr.message);
       }
     } catch (err) {
       console.error('Erro ao carregar dados de referencia:', err);
@@ -98,36 +127,60 @@ export default function Review() {
     }
   }
 
-  useEffect(() => {
-    if (accounts.length > 0) {
-      const result = ChartOfAccountsMapper.validate(accounts);
-      setValidationErrors(result.errors);
-    }
-  }, [accounts]);
+  const handleAccountsReady = useCallback((accts, isValid) => {
+    setExportedAccounts(accts);
+    setCoaReady(isValid);
+  }, []);
 
-  function handleCreateInNetSuite() {
+  function handleNodesChange(nodes, isValid) {
+    setSubsidiaryNodes(nodes);
+    setNodesValid(isValid);
+  }
+
+  function handleProceed() {
     if (mode === 'existing' && !selectedSubsidiaryId) {
       alert('Selecione uma subsidiary antes de continuar');
       return;
     }
+    setShowConfirm(true);
+  }
 
+  function handleConfirmCreate() {
+    const existingAccountsObj = Object.fromEntries(existingAccounts);
+    const importKey = exportedAccounts.length > 0 ? computeImportKey(exportedAccounts) : '';
     sessionStorage.setItem('createData', JSON.stringify({
-      subsidiary,
-      accounts,
+      subsidiaryNodes: mode === 'create' ? subsidiaryNodes : null,
+      accounts: exportedAccounts,
       subsidiaryId: mode === 'existing' ? selectedSubsidiaryId : null,
       createSubsidiary: mode === 'create',
+      existingAccounts: existingAccountsObj,
+      importKey,
     }));
+    sessionStorage.removeItem('subsidiaryOnly');
     navigate('/status');
   }
 
-  if (!subsidiary) return null;
+  // Contagem de acoes para o modal de confirmacao
+  const confirmCounts = React.useMemo(() => {
+    const toCreate = exportedAccounts.filter((a) => !a._action || a._action === 'create').length;
+    const toUpdate = exportedAccounts.filter((a) => a._action === 'update').length;
+    const toSkip = exportedAccounts.filter((a) => a._action === 'skip').length;
+    return { toCreate, toUpdate, toSkip };
+  }, [exportedAccounts]);
+
+  if (!initialSubsidiary) return null;
+
+  const hasAccounts = rawAccounts.length > 0;
+  const createDisabled = mode === 'create'
+    ? (!nodesValid || (hasAccounts && !coaReady))
+    : (!selectedSubsidiaryId || loadingSubs || (hasAccounts && !coaReady));
 
   return (
-    <div className="max-w-md mx-auto space-y-4">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-medium text-ocean-180">Revisao dos Dados</h2>
         <button
-          onClick={() => navigate('/upload')}
+          onClick={() => navigate(subsidiaryOnly ? '/' : '/upload')}
           className="text-sm text-ocean-150 hover:text-ocean-180 flex items-center gap-1"
         >
           <ArrowLeft className="w-3 h-3" />
@@ -135,73 +188,67 @@ export default function Review() {
         </button>
       </div>
 
-      {/* Modo de subsidiary */}
-      <div className="bg-white rounded-lg border border-ocean-30 p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Building2 className="w-5 h-5 text-ocean-120" />
-          <h3 className="text-sm font-medium text-ocean-180">Subsidiary</h3>
+      {/* Modo de subsidiary — toggle Criar Nova / Usar Existente */}
+      {!subsidiaryOnly && (
+        <div className="bg-white rounded-lg border border-ocean-30 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Building2 className="w-5 h-5 text-ocean-120" />
+            <h3 className="text-sm font-medium text-ocean-180">Subsidiary</h3>
+          </div>
+
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => handleModeChange('create')}
+              className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                mode === 'create'
+                  ? 'bg-ocean-120 text-white'
+                  : 'bg-ocean-10 text-ocean-150 hover:bg-ocean-30'
+              }`}
+            >
+              <Plus className="w-3 h-3" />
+              Criar Nova
+            </button>
+            <button
+              onClick={() => handleModeChange('existing')}
+              className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                mode === 'existing'
+                  ? 'bg-ocean-120 text-white'
+                  : 'bg-ocean-10 text-ocean-150 hover:bg-ocean-30'
+              }`}
+            >
+              <List className="w-3 h-3" />
+              Usar Existente
+            </button>
+          </div>
+
+          {mode === 'existing' && (
+            <>
+              {loadingSubs ? (
+                <div className="flex items-center gap-2 text-sm text-ocean-150">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Carregando subsidiaries...
+                </div>
+              ) : existingSubsidiaries.length === 0 ? (
+                <p className="text-sm text-rose">Nenhuma subsidiary encontrada.</p>
+              ) : (
+                <select
+                  value={selectedSubsidiaryId}
+                  onChange={(e) => setSelectedSubsidiaryId(e.target.value)}
+                  className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120"
+                >
+                  {existingSubsidiaries.map((sub) => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.id} - {sub.name || 'Subsidiary'}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </>
+          )}
         </div>
+      )}
 
-        <div className="flex gap-2 mb-3">
-          <button
-            onClick={() => handleModeChange('create')}
-            className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              mode === 'create'
-                ? 'bg-ocean-120 text-white'
-                : 'bg-ocean-10 text-ocean-150 hover:bg-ocean-30'
-            }`}
-          >
-            <Plus className="w-3 h-3" />
-            Criar Nova
-          </button>
-          <button
-            onClick={() => handleModeChange('existing')}
-            className={`flex-1 flex items-center justify-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              mode === 'existing'
-                ? 'bg-ocean-120 text-white'
-                : 'bg-ocean-10 text-ocean-150 hover:bg-ocean-30'
-            }`}
-          >
-            <List className="w-3 h-3" />
-            Usar Existente
-          </button>
-        </div>
-
-        {mode === 'existing' && (
-          <>
-            {loadingSubs ? (
-              <div className="flex items-center gap-2 text-sm text-ocean-150">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Carregando subsidiaries...
-              </div>
-            ) : existingSubsidiaries.length === 0 ? (
-              <p className="text-sm text-rose">
-                Nenhuma subsidiary encontrada.
-              </p>
-            ) : (
-              <select
-                value={selectedSubsidiaryId}
-                onChange={(e) => setSelectedSubsidiaryId(e.target.value)}
-                className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120"
-              >
-                {existingSubsidiaries.map((sub) => (
-                  <option key={sub.id} value={sub.id}>
-                    {sub.id} - {sub.name || 'Subsidiary'}
-                  </option>
-                ))}
-              </select>
-            )}
-          </>
-        )}
-
-        {mode === 'create' && (
-          <p className="text-xs text-ocean-150">
-            Sera criada via RESTlet. Verifique se a URL do RESTlet esta configurada em Configuracoes.
-          </p>
-        )}
-      </div>
-
-      {/* Preview da subsidiary (editavel) - so mostra no modo criar */}
+      {/* Visual Subsidiary Builder — modo criar */}
       {mode === 'create' && (
         loadingLookup ? (
           <div className="flex items-center gap-2 text-sm text-ocean-150 bg-white rounded-lg border border-ocean-30 p-4">
@@ -215,40 +262,90 @@ export default function Review() {
                 <strong>Erro ao carregar listas:</strong> {lookupError}
               </div>
             )}
-            {lookupData && (
-              <div className="bg-ocean-10 border border-ocean-30 rounded-lg p-2 text-xs text-ocean-120">
-                Listas: Subs={lookupData.subsidiaries?.length || 0}, Moedas={lookupData.currencies?.length || 0}, CalFisc={lookupData.fiscalCalendars?.length || 0}, Cidades={lookupData.brCities?.length || 0}, Estados={lookupData.brStates?.length || 0}
-              </div>
-            )}
-            <SubsidiaryPreview subsidiary={subsidiary} onChange={setSubsidiary} lookupData={lookupData} />
+            <SubsidiaryBuilder
+              initialSubsidiary={initialSubsidiary}
+              lookupData={lookupData}
+              onNodesChange={handleNodesChange}
+            />
           </>
         )
       )}
 
-      <ChartOfAccountsPreview accounts={accounts} onChange={setAccounts} />
-
-      {validationErrors.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-4 h-4 text-golden" />
-            <span className="text-sm font-medium text-golden">Avisos de Validacao</span>
-          </div>
-          <ul className="text-xs text-golden space-y-1">
-            {validationErrors.map((err, i) => (
-              <li key={i}>{err}</li>
-            ))}
-          </ul>
-        </div>
+      {rawAccounts.length > 0 && (
+        <CoaModeler
+          rawAccounts={rawAccounts}
+          existingAccounts={existingAccounts}
+          onAccountsReady={handleAccountsReady}
+        />
       )}
 
       <button
-        onClick={handleCreateInNetSuite}
-        disabled={mode === 'existing' && (!selectedSubsidiaryId || loadingSubs)}
+        onClick={handleProceed}
+        disabled={createDisabled}
         className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-pine text-white rounded-md text-sm font-medium hover:bg-ocean-180 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ArrowRight className="w-4 h-4" />
-        {mode === 'create' ? 'Criar Subsidiary + Contas' : 'Criar Contas no NetSuite'}
+        {mode === 'create'
+          ? (hasAccounts ? 'Criar Subsidiaries + Contas' : 'Criar Subsidiaries')
+          : 'Criar Contas no NetSuite'}
       </button>
+
+      {/* Modal de confirmacao pre-criacao */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg border border-ocean-30 p-5 max-w-sm w-full mx-4 shadow-lg">
+            <h3 className="text-sm font-medium text-ocean-180 mb-3">Confirmar Importacao</h3>
+
+            <div className="space-y-2 text-sm text-ocean-150 mb-4">
+              <p className="font-medium text-ocean-180">
+                {mode === 'create' ? 'Criar nova subsidiary' : `Subsidiary existente (ID ${selectedSubsidiaryId})`}
+              </p>
+
+              {hasAccounts && (
+                <div className="space-y-1 text-xs">
+                  {confirmCounts.toCreate > 0 && (
+                    <p className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-pine flex-shrink-0" />
+                      {confirmCounts.toCreate} conta{confirmCounts.toCreate !== 1 ? 's' : ''} a criar
+                    </p>
+                  )}
+                  {confirmCounts.toUpdate > 0 && (
+                    <p className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-golden flex-shrink-0" />
+                      {confirmCounts.toUpdate} conta{confirmCounts.toUpdate !== 1 ? 's' : ''} a atualizar
+                    </p>
+                  )}
+                  {confirmCounts.toSkip > 0 && (
+                    <p className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-ocean-60 flex-shrink-0" />
+                      {confirmCounts.toSkip} conta{confirmCounts.toSkip !== 1 ? 's' : ''} a pular
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {!hasAccounts && (
+                <p className="text-xs text-ocean-60">Modo subsidiary-only (sem plano de contas)</p>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 px-3 py-2 text-sm border border-ocean-30 rounded-md text-ocean-150 hover:bg-ocean-10"
+              >
+                Voltar
+              </button>
+              <button
+                onClick={handleConfirmCreate}
+                className="flex-1 px-3 py-2 text-sm bg-pine text-white rounded-md font-medium hover:bg-ocean-180"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

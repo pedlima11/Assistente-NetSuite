@@ -49,7 +49,7 @@ export default function Upload() {
   }
 
   return (
-    <div className="max-w-md mx-auto space-y-4">
+    <div className="max-w-4xl space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-medium text-ocean-180">{pageTitle}</h2>
         <button
@@ -80,7 +80,7 @@ export default function Upload() {
       <button
         onClick={handleProcess}
         disabled={!file || processing}
-        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-ocean-120 text-white rounded-md text-sm font-medium hover:bg-ocean-180 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-ocean-120 text-white rounded-md text-sm font-medium hover:bg-ocean-150 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {processing ? (
           <Loader2 className="w-4 h-4 animate-spin" />

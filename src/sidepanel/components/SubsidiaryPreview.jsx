@@ -52,19 +52,19 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
 
   return (
     <div className="bg-white rounded-lg border border-ocean-30 p-4">
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-4">
         <Building2 className="w-5 h-5 text-ocean-120" />
-        <h3 className="text-sm font-medium text-ocean-180">Dados da Filial</h3>
+        <h3 className="text-base font-medium text-ocean-180">Dados da Filial</h3>
       </div>
 
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
         {/* Nome */}
         <Field label="Razao Social" required>
           <input
             type="text"
             value={subsidiary.name || ''}
             onChange={(e) => handleFieldChange('name', e.target.value)}
-            className="input-field"
+            className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
           />
         </Field>
 
@@ -74,7 +74,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
             type="text"
             value={subsidiary.cnpj || ''}
             onChange={(e) => handleFieldChange('cnpj', e.target.value)}
-            className="input-field"
+            className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
           />
         </Field>
 
@@ -84,7 +84,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
             type="text"
             value={subsidiary.ie || ''}
             onChange={(e) => handleFieldChange('ie', e.target.value)}
-            className="input-field"
+            className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
           />
         </Field>
 
@@ -94,7 +94,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
             <select
               value={subsidiary.parent || ''}
               onChange={(e) => handleFieldChange('parent', e.target.value)}
-              className="input-field"
+              className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             >
               <option value="">Selecione...</option>
               {lookupData.subsidiaries.map((s) => (
@@ -107,7 +107,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
               value={subsidiary.parent || ''}
               onChange={(e) => handleFieldChange('parent', e.target.value)}
               placeholder="ID da empresa-mae"
-              className="input-field"
+              className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             />
           )}
         </Field>
@@ -118,7 +118,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
             <select
               value={subsidiary.currency || ''}
               onChange={(e) => handleFieldChange('currency', e.target.value)}
-              className="input-field"
+              className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             >
               <option value="">Selecione...</option>
               {lookupData.currencies.map((c) => (
@@ -131,7 +131,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
               value={subsidiary.currency || ''}
               onChange={(e) => handleFieldChange('currency', e.target.value)}
               placeholder="ID da moeda BRL"
-              className="input-field"
+              className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             />
           )}
         </Field>
@@ -142,7 +142,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
             <select
               value={subsidiary.taxfiscalcalendar || ''}
               onChange={(e) => handleFieldChange('taxfiscalcalendar', e.target.value)}
-              className="input-field"
+              className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             >
               <option value="">Selecione...</option>
               {lookupData.taxFiscalCalendars.map((c) => (
@@ -155,7 +155,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
               value={subsidiary.taxfiscalcalendar || ''}
               onChange={(e) => handleFieldChange('taxfiscalcalendar', e.target.value)}
               placeholder="ID do calendario"
-              className="input-field"
+              className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             />
           )}
         </Field>
@@ -166,7 +166,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
             <select
               value={subsidiary.fiscalcalendar || ''}
               onChange={(e) => handleFieldChange('fiscalcalendar', e.target.value)}
-              className="input-field"
+              className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             >
               <option value="">Selecione...</option>
               {lookupData.fiscalCalendars.map((c) => (
@@ -179,7 +179,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
               value={subsidiary.fiscalcalendar || ''}
               onChange={(e) => handleFieldChange('fiscalcalendar', e.target.value)}
               placeholder="ID do calendario"
-              className="input-field"
+              className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             />
           )}
         </Field>
@@ -190,7 +190,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
             type="text"
             value={subsidiary.address || ''}
             onChange={(e) => handleFieldChange('address', e.target.value)}
-            className="input-field"
+            className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
           />
         </Field>
 
@@ -201,7 +201,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
             value={subsidiary.addressNumber || ''}
             onChange={(e) => handleFieldChange('addressNumber', e.target.value)}
             placeholder="Ex: 123"
-            className="input-field"
+            className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
           />
         </Field>
 
@@ -211,7 +211,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
             <select
               value={subsidiary.brCityId || ''}
               onChange={(e) => handleFieldChange('brCityId', e.target.value)}
-              className="input-field"
+              className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             >
               <option value="">Selecione...</option>
               {lookupData.brCities.map((c) => (
@@ -224,7 +224,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
               value={subsidiary.brCityId || ''}
               onChange={(e) => handleFieldChange('brCityId', e.target.value)}
               placeholder="ID da cidade"
-              className="input-field"
+              className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             />
           )}
         </Field>
@@ -235,7 +235,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
             <select
               value={subsidiary.state || ''}
               onChange={(e) => handleFieldChange('state', e.target.value)}
-              className="input-field"
+              className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             >
               <option value="">Selecione...</option>
               {lookupData.brStates.map((s) => (
@@ -248,7 +248,7 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
               value={subsidiary.state || ''}
               onChange={(e) => handleFieldChange('state', e.target.value)}
               placeholder="Ex: SP"
-              className="input-field"
+              className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             />
           )}
         </Field>
@@ -259,37 +259,23 @@ export default function SubsidiaryPreview({ subsidiary, onChange, lookupData }) 
             type="text"
             value={subsidiary.zipCode || ''}
             onChange={(e) => handleFieldChange('zipCode', e.target.value)}
-            className="input-field"
+            className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
           />
         </Field>
       </div>
 
-      <style>{`
-        .input-field {
-          width: 100%;
-          padding: 4px 8px;
-          border: 1px solid #E7F2F5;
-          border-radius: 4px;
-          font-size: 0.875rem;
-          outline: none;
-        }
-        .input-field:focus {
-          border-color: #36677D;
-          box-shadow: 0 0 0 1px #36677D;
-        }
-      `}</style>
     </div>
   );
 }
 
 function Field({ label, required, children }) {
   return (
-    <div className="flex items-start gap-2">
-      <label className="text-xs text-ocean-150 w-28 flex-shrink-0 pt-1.5">
+    <div>
+      <label className="block text-sm text-ocean-150 mb-1">
         {label}
         {required && <span className="text-rose ml-0.5">*</span>}
       </label>
-      <div className="flex-1">{children}</div>
+      <div>{children}</div>
     </div>
   );
 }
