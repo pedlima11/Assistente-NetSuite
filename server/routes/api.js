@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { readFileSync, writeFileSync, unlinkSync } from 'fs';
+import { unlinkSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { randomBytes } from 'crypto';
@@ -18,24 +18,27 @@ import { preValidate, prioritizeForAI } from '../services/tax-pre-validator.js';
 import { analyzeTaxRules, getAuditLog } from '../services/tax-ai-analyzer.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const CREDENTIALS_FILE = resolve(__dirname, '..', 'data', 'credentials.json');
 
 export const router = Router();
 
-// --- Persistência de credenciais (substitui chrome.storage.local) ---
+// --- Extrair credenciais do request (stateless — nunca persiste no server) ---
 
-function getCredentials() {
-  try {
-    const data = readFileSync(CREDENTIALS_FILE, 'utf-8');
-    const parsed = JSON.parse(data);
-    return Object.keys(parsed).length > 0 ? parsed : null;
-  } catch {
-    return null;
+function extractCredentials(message) {
+  const c = message?._credentials;
+  if (!c) {
+    const err = new Error('Credenciais nao fornecidas. Va em Configuracoes e preencha os dados.');
+    err.status = 400;
+    throw err;
   }
-}
-
-function saveCredentials(credentials) {
-  writeFileSync(CREDENTIALS_FILE, JSON.stringify(credentials, null, 2), 'utf-8');
+  const required = ['netsuiteAccountId', 'consumerKey', 'consumerSecret', 'tokenId', 'tokenSecret'];
+  for (const key of required) {
+    if (!c[key] || typeof c[key] !== 'string') {
+      const err = new Error(`Campo de credencial ausente ou invalido: ${key}`);
+      err.status = 400;
+      throw err;
+    }
+  }
+  return c;
 }
 
 // --- Helpers ---
@@ -315,24 +318,18 @@ async function callSuiteQL(credentials, sql, limit = 1000, offset = 0) {
 // --- Message Router (mesmo switch/case do service-worker.js) ---
 
 async function handleMessage(message) {
-  const credentials = getCredentials();
+  // Credenciais vem do request (localStorage do browser), nunca do server
+  // extractCredentials() so e chamado nos cases que precisam de NetSuite
+  // Para STRUCTURE_DATA, so precisa de claudeApiKey
 
   switch (message.type) {
-    case 'SAVE_CREDENTIALS': {
-      saveCredentials(message.data);
-      return { success: true };
-    }
-
-    case 'GET_CREDENTIALS': {
-      return credentials || {};
-    }
-
     case 'STRUCTURE_DATA': {
-      if (!credentials || !credentials.claudeApiKey) {
+      const claudeKey = message._credentials?.claudeApiKey;
+      if (!claudeKey) {
         throw new Error('API key da Claude nao configurada');
       }
       const result = await callClaudeAPI(
-        credentials.claudeApiKey,
+        claudeKey,
         message.data.prompt,
         message.data.financialData
       );
@@ -340,21 +337,21 @@ async function handleMessage(message) {
     }
 
     case 'NETSUITE_API_REQUEST': {
-      if (!credentials || !credentials.netsuiteAccountId) {
-        throw new Error('Credenciais NetSuite nao configuradas');
-      }
+      const credentials = extractCredentials(message);
       return callNetSuiteAPI(credentials, message.method, message.endpoint, message.body);
     }
 
     case 'FETCH_LOOKUP_DATA': {
-      if (!credentials || !credentials.restletUrl) {
+      const credentials = extractCredentials(message);
+      if (!credentials.restletUrl) {
         throw new Error('URL do RESTlet nao configurada');
       }
       return callRestlet(credentials, 'GET', credentials.restletUrl);
     }
 
     case 'TAX_DISCOVERY': {
-      if (!credentials || !credentials.restletUrl) {
+      const credentials = extractCredentials(message);
+      if (!credentials.restletUrl) {
         throw new Error('URL do RESTlet nao configurada');
       }
       const action = message.action || 'taxDiscovery';
@@ -363,7 +360,8 @@ async function handleMessage(message) {
     }
 
     case 'CREATE_TAX_RULES': {
-      if (!credentials || !credentials.restletUrl) {
+      const credentials = extractCredentials(message);
+      if (!credentials.restletUrl) {
         throw new Error('URL do RESTlet nao configurada. Va em Configuracoes e preencha a URL do RESTlet.');
       }
       return callRestlet(credentials, 'POST', credentials.restletUrl, {
@@ -374,7 +372,8 @@ async function handleMessage(message) {
     }
 
     case 'CREATE_CUSTOMERS': {
-      if (!credentials || !credentials.restletUrl) {
+      const credentials = extractCredentials(message);
+      if (!credentials.restletUrl) {
         throw new Error('URL do RESTlet nao configurada. Va em Configuracoes e preencha a URL do RESTlet.');
       }
       return callRestlet(credentials, 'POST', credentials.restletUrl, {
@@ -385,7 +384,8 @@ async function handleMessage(message) {
     }
 
     case 'CUSTOMER_LOOKUP_DATA': {
-      if (!credentials || !credentials.restletUrl) {
+      const credentials = extractCredentials(message);
+      if (!credentials.restletUrl) {
         throw new Error('URL do RESTlet nao configurada.');
       }
       const custLookupUrl = credentials.restletUrl + '&action=customerLookup';
@@ -393,7 +393,8 @@ async function handleMessage(message) {
     }
 
     case 'CREATE_VENDORS': {
-      if (!credentials || !credentials.restletUrl) {
+      const credentials = extractCredentials(message);
+      if (!credentials.restletUrl) {
         throw new Error('URL do RESTlet nao configurada. Va em Configuracoes e preencha a URL do RESTlet.');
       }
       return callRestlet(credentials, 'POST', credentials.restletUrl, {
@@ -404,7 +405,8 @@ async function handleMessage(message) {
     }
 
     case 'ITEM_LOOKUP_DATA': {
-      if (!credentials || !credentials.restletUrl) {
+      const credentials = extractCredentials(message);
+      if (!credentials.restletUrl) {
         throw new Error('URL do RESTlet nao configurada.');
       }
       const subIdParam = message.data?.subsidiaryId ? '&subsidiaryId=' + encodeURIComponent(message.data.subsidiaryId) : '';
@@ -414,7 +416,8 @@ async function handleMessage(message) {
     }
 
     case 'SEARCH_NCM': {
-      if (!credentials || !credentials.restletUrl) {
+      const credentials = extractCredentials(message);
+      if (!credentials.restletUrl) {
         throw new Error('URL do RESTlet nao configurada.');
       }
       const ncmQuery = encodeURIComponent(message.data.query || '');
@@ -423,7 +426,8 @@ async function handleMessage(message) {
     }
 
     case 'BATCH_SEARCH_NCM': {
-      if (!credentials || !credentials.restletUrl) {
+      const credentials = extractCredentials(message);
+      if (!credentials.restletUrl) {
         throw new Error('URL do RESTlet nao configurada.');
       }
       const ncmCodes = (message.data.codes || []).join(',');
@@ -432,7 +436,8 @@ async function handleMessage(message) {
     }
 
     case 'CREATE_ITEMS': {
-      if (!credentials || !credentials.restletUrl) {
+      const credentials = extractCredentials(message);
+      if (!credentials.restletUrl) {
         throw new Error('URL do RESTlet nao configurada. Va em Configuracoes e preencha a URL do RESTlet.');
       }
       return callRestlet(credentials, 'POST', credentials.restletUrl, {
@@ -445,9 +450,7 @@ async function handleMessage(message) {
     }
 
     case 'CREATE_SUBSIDIARY': {
-      if (!credentials || !credentials.netsuiteAccountId) {
-        throw new Error('Credenciais NetSuite nao configuradas');
-      }
+      const credentials = extractCredentials(message);
       if (!credentials.restletUrl) {
         throw new Error('URL do RESTlet nao configurada. Va em Configuracoes e preencha a URL do RESTlet.');
       }
@@ -478,21 +481,18 @@ async function handleMessage(message) {
     }
 
     case 'CREATE_ACCOUNTS': {
-      if (!credentials || !credentials.netsuiteAccountId) {
-        throw new Error('Credenciais NetSuite nao configuradas');
-      }
+      const credentials = extractCredentials(message);
       return callNetSuiteAPI(credentials, 'POST', '/account', message.body);
     }
 
     case 'SUITEQL_QUERY': {
-      if (!credentials || !credentials.netsuiteAccountId) {
-        throw new Error('Credenciais NetSuite nao configuradas');
-      }
+      const credentials = extractCredentials(message);
       return callSuiteQL(credentials, message.sql, message.limit || 1000, message.offset || 0);
     }
 
     case 'SET_OPENING_BALANCES': {
-      if (!credentials || !credentials.restletUrl) {
+      const credentials = extractCredentials(message);
+      if (!credentials.restletUrl) {
         throw new Error('URL do RESTlet nao configurada');
       }
       const balancesPayload = {
@@ -523,7 +523,7 @@ async function handleMessage(message) {
       );
 
       // Camada 5: AI Reviewer
-      const apiKey = credentials?.claudeApiKey || null;
+      const apiKey = message._credentials?.claudeApiKey || null;
       const result = await analyzeTaxRules({
         rules: prioritized.rules,
         determinations: prioritized.determinations,
@@ -568,8 +568,8 @@ router.post('/message', async (req, res) => {
     const result = await handleMessage(req.body);
     res.json(result);
   } catch (error) {
-    // Status semantico baseado na falha upstream
-    let status = 500;
+    // Status semantico baseado na falha
+    let status = error.status || 500;
     if (error.upstreamStatus === 429) status = 429;
     else if (error.upstreamStatus >= 500) status = 502;
     else if (error.message?.includes('upstream')) status = 502;
@@ -666,28 +666,26 @@ async function processSpedJob(jobId, files, options) {
 
     // NCM NetSuite lookup (opcional — enriquece NCM do SPED com cadastro NS)
     let nsNcmMap = null;
-    if (options.useNcmNetSuite) {
+    if (options.useNcmNetSuite && options._credentials?.netsuiteAccountId) {
       try {
         job.progress = { phase: 'ncm_lookup', percent: 8, detail: 'Buscando NCMs no NetSuite...' };
-        const credentials = getCredentials();
-        if (credentials?.netsuiteAccountId) {
-          nsNcmMap = new Map();
-          let offset = 0;
-          const pageSize = 1000;
-          let hasMore = true;
-          while (hasMore) {
-            const sql = `SELECT itemid, custitem_ncm_code FROM item WHERE custitem_ncm_code IS NOT NULL FETCH FIRST ${pageSize} ROWS ONLY`;
-            const result = await callSuiteQL(credentials, sql, pageSize, offset);
-            const items = result?.items || [];
-            for (const row of items) {
-              if (row.itemid && row.custitem_ncm_code) {
-                nsNcmMap.set(String(row.itemid).trim(), String(row.custitem_ncm_code).replace(/\./g, '').trim());
-              }
+        const credentials = options._credentials;
+        nsNcmMap = new Map();
+        let offset = 0;
+        const pageSize = 1000;
+        let hasMore = true;
+        while (hasMore) {
+          const sql = `SELECT itemid, custitem_ncm_code FROM item WHERE custitem_ncm_code IS NOT NULL FETCH FIRST ${pageSize} ROWS ONLY`;
+          const result = await callSuiteQL(credentials, sql, pageSize, offset);
+          const items = result?.items || [];
+          for (const row of items) {
+            if (row.itemid && row.custitem_ncm_code) {
+              nsNcmMap.set(String(row.itemid).trim(), String(row.custitem_ncm_code).replace(/\./g, '').trim());
             }
-            hasMore = items.length === pageSize;
-            offset += pageSize;
-            if (offset > 50000) break; // safety cap
           }
+          hasMore = items.length === pageSize;
+          offset += pageSize;
+          if (offset > 50000) break; // safety cap
         }
       } catch (err) {
         // Graceful: se falhar, segue sem NCM do NetSuite
@@ -1017,28 +1015,26 @@ async function processSpedMergedJob(jobId, fiscalFiles, contribFiles, options) {
   try {
     // NCM NetSuite lookup (opcional)
     let nsNcmMap = null;
-    if (options.useNcmNetSuite) {
+    if (options.useNcmNetSuite && options._credentials?.netsuiteAccountId) {
       try {
         job.progress = { phase: 'ncm_lookup', percent: 0, detail: 'Buscando NCMs no NetSuite...' };
-        const credentials = getCredentials();
-        if (credentials?.netsuiteAccountId) {
-          nsNcmMap = new Map();
-          let offset = 0;
-          const pageSize = 1000;
-          let hasMore = true;
-          while (hasMore) {
-            const sql = `SELECT itemid, custitem_ncm_code FROM item WHERE custitem_ncm_code IS NOT NULL FETCH FIRST ${pageSize} ROWS ONLY`;
-            const result = await callSuiteQL(credentials, sql, pageSize, offset);
-            const items = result?.items || [];
-            for (const row of items) {
-              if (row.itemid && row.custitem_ncm_code) {
-                nsNcmMap.set(String(row.itemid).trim(), String(row.custitem_ncm_code).replace(/\./g, '').trim());
-              }
+        const credentials = options._credentials;
+        nsNcmMap = new Map();
+        let offset = 0;
+        const pageSize = 1000;
+        let hasMore = true;
+        while (hasMore) {
+          const sql = `SELECT itemid, custitem_ncm_code FROM item WHERE custitem_ncm_code IS NOT NULL FETCH FIRST ${pageSize} ROWS ONLY`;
+          const result = await callSuiteQL(credentials, sql, pageSize, offset);
+          const items = result?.items || [];
+          for (const row of items) {
+            if (row.itemid && row.custitem_ncm_code) {
+              nsNcmMap.set(String(row.itemid).trim(), String(row.custitem_ncm_code).replace(/\./g, '').trim());
             }
-            hasMore = items.length === pageSize;
-            offset += pageSize;
-            if (offset > 50000) break;
           }
+          hasMore = items.length === pageSize;
+          offset += pageSize;
+          if (offset > 50000) break;
         }
       } catch {
         nsNcmMap = null;

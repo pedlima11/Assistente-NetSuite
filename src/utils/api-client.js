@@ -1,15 +1,24 @@
+import { loadCredentials } from './credentials-storage.js';
+
 /**
  * Substitui chrome-messaging.js — mesma interface, transporte via fetch.
- * Todos os callers continuam usando sendToBackground(message) sem mudança.
+ * Anexa credenciais do localStorage em toda mensagem.
  *
- * @param {Object} message - Mensagem com type e payload (mesmo formato do service worker)
+ * @param {Object} message - Mensagem com type e payload
  * @returns {Promise<any>}
  */
 export function sendToBackground(message) {
+  const credentials = loadCredentials();
+
+  const payload = {
+    ...message,
+    _credentials: credentials,
+  };
+
   return fetch('/api/message', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(message),
+    body: JSON.stringify(payload),
   })
     .then(async (res) => {
       if (!res.ok) {

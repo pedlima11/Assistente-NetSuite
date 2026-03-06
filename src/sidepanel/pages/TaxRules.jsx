@@ -1896,21 +1896,19 @@ export default function TaxRules() {
 
   // Verificar se Claude API key existe
   useEffect(() => {
-    async function checkApiKey() {
-      try {
-        const creds = await sendToBackground({ type: 'GET_CREDENTIALS' });
-        const hasKey = !!(creds && creds.claudeApiKey);
-        setHasApiKey(hasKey);
-        // Smart default: ativar se tem key e nao ha preferencia salva
-        const saved = localStorage.getItem('taxRulesAiEnabled');
-        if (saved === null && hasKey) {
-          setAiEnabled(true);
-        }
-      } catch {
-        setHasApiKey(false);
+    try {
+      const stored = localStorage.getItem('ns_credentials_v1');
+      const creds = stored ? JSON.parse(stored) : null;
+      const hasKey = !!(creds && creds.claudeApiKey);
+      setHasApiKey(hasKey);
+      // Smart default: ativar se tem key e nao ha preferencia salva
+      const saved = localStorage.getItem('taxRulesAiEnabled');
+      if (saved === null && hasKey) {
+        setAiEnabled(true);
       }
+    } catch {
+      setHasApiKey(false);
     }
-    checkApiKey();
   }, []);
 
   function toggleAiEnabled() {
@@ -2061,6 +2059,8 @@ export default function TaxRules() {
       for (const file of files) {
         formData.append('files', file);
       }
+      const storedCreds = localStorage.getItem('ns_credentials_v1');
+      const _credentials = storedCreds ? JSON.parse(storedCreds) : null;
       formData.append('options', JSON.stringify({
         ...spedOptions,
         subsidiaryName: config.subsidiaryName,
@@ -2069,6 +2069,7 @@ export default function TaxRules() {
         validoAPartirDe: config.validoAPartirDe,
         subsidiaryCnpj: config.subsidiaryCnpj,
         nsParamTypes: nsParamTypes.length > 0 ? nsParamTypes : null,
+        _credentials,
       }));
 
       const startResp = await fetch('/api/parse-sped/start', {

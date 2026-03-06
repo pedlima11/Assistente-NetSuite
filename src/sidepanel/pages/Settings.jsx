@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { sendToBackground } from '../../utils/api-client.js';
-import { Settings as SettingsIcon, Save, CheckCircle, AlertCircle, ArrowLeft, Search, Loader2 } from 'lucide-react';
+import { loadCredentials as loadFromStorage, saveCredentials as saveToStorage, clearCredentials } from '../../utils/credentials-storage.js';
+import { Settings as SettingsIcon, Save, CheckCircle, AlertCircle, ArrowLeft, Search, Loader2, Trash2 } from 'lucide-react';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -20,19 +21,11 @@ export default function Settings() {
   const [discoveryResult, setDiscoveryResult] = useState(null);
 
   useEffect(() => {
-    loadCredentials();
-  }, []);
-
-  async function loadCredentials() {
-    try {
-      const saved = await sendToBackground({ type: 'GET_CREDENTIALS' });
-      if (saved && saved.netsuiteAccountId) {
-        setCredentials(saved);
-      }
-    } catch {
-      // Sem credenciais salvas
+    const saved = loadFromStorage();
+    if (saved && saved.netsuiteAccountId) {
+      setCredentials(saved);
     }
-  }
+  }, []);
 
   function handleChange(field, value) {
     setCredentials((prev) => ({ ...prev, [field]: value }));
@@ -52,7 +45,7 @@ export default function Settings() {
         throw new Error(`Campos obrigatorios: ${missing.join(', ')}`);
       }
 
-      await sendToBackground({ type: 'SAVE_CREDENTIALS', data: credentials });
+      saveToStorage(credentials);
       setStatus('saved');
 
       // Navegar para home apos salvar
@@ -168,14 +161,30 @@ export default function Settings() {
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={status === 'saving'}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-ocean-120 text-white rounded-md text-sm font-medium hover:bg-ocean-150 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Save className="w-4 h-4" />
-          {status === 'saving' ? 'Salvando...' : 'Salvar e Continuar'}
-        </button>
+        <p className="text-xs text-ocean-60">Credenciais salvas localmente neste navegador.</p>
+
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            disabled={status === 'saving'}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-ocean-120 text-white rounded-md text-sm font-medium hover:bg-ocean-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Save className="w-4 h-4" />
+            {status === 'saving' ? 'Salvando...' : 'Salvar e Continuar'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              clearCredentials();
+              setCredentials({ netsuiteAccountId: '', consumerKey: '', consumerSecret: '', tokenId: '', tokenSecret: '', claudeApiKey: '', restletUrl: '' });
+              setStatus(null);
+            }}
+            className="flex items-center justify-center gap-2 px-4 py-2 border border-rose text-rose rounded-md text-sm font-medium hover:bg-rose/10"
+          >
+            <Trash2 className="w-4 h-4" />
+            Limpar
+          </button>
+        </div>
       </form>
 
       {/* Tax Discovery */}
