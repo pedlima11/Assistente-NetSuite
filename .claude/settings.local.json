@@ -25,7 +25,14 @@
       "Bash(timeout 8 npm run dev:client)",
       "Bash(gtimeout 8 npm run dev:client)",
       "Bash(git remote add origin https://github.com/pedlima11/Assistente-NetSuite.git)",
-      "Bash(git add -A)"
+      "Bash(git add -A)",
+      "Bash(git commit:*)",
+      "Bash(brew install gh)",
+      "Bash(gh auth login -h github.com -p https -w)",
+      "Bash(git push -u origin main)",
+      "Bash(gh auth setup-git)",
+      "Bash(git push)",
+      "Bash(ls /Users/pedrolima/Desktop/Assistente_NetSuite/src/i18n/locales/pt/*.json)"
     ]
   }
 }

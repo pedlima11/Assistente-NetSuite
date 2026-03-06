@@ -1,34 +1,38 @@
 /**
  * Pure validation functions for subsidiary nodes.
  * No React dependency — can be used anywhere.
+ * Returns i18n keys instead of hardcoded strings.
+ * Consumers resolve keys via t() at render time.
+ *
+ * Error format: string (simple key) | { key: string, params: object } (interpolated)
  */
 
 /**
- * Validates a single node. Returns string[] of error messages.
+ * Validates a single node. Returns i18n error keys.
  * @param {Object} node
  * @param {Object[]} allNodes
- * @returns {string[]}
+ * @returns {(string | { key: string, params: object })[]}
  */
 export function validateNode(node, allNodes) {
   if (node._isExisting) return [];
   const errors = [];
 
   if (!node.name?.trim()) {
-    errors.push('Razao Social obrigatoria');
+    errors.push('validation.nameRequired');
   }
 
   // CNPJ: if provided, must be 14 digits
   if (node.cnpj) {
     const digits = node.cnpj.replace(/\D/g, '');
     if (digits.length !== 14) {
-      errors.push('CNPJ deve ter 14 digitos');
+      errors.push('validation.cnpjDigits');
     }
     // Uniqueness
     const dupe = allNodes.find(
       (n) => n.clientNodeId !== node.clientNodeId && n.cnpj && n.cnpj.replace(/\D/g, '') === digits
     );
     if (dupe) {
-      errors.push(`CNPJ duplicado com "${dupe.name || 'outra filial'}"`);
+      errors.push({ key: 'validation.cnpjDuplicate', params: { name: dupe.name || '' } });
     }
   }
 
@@ -40,15 +44,15 @@ export function validateNode(node, allNodes) {
 
   // Effective root must have a NetSuite parent subsidiary selected
   if (isEffectiveRoot && !node.parent) {
-    errors.push('Subsidiary pai obrigatoria');
+    errors.push('validation.parentRequired');
   }
 
-  if (!node.currency) errors.push('Moeda obrigatoria');
-  if (!node.fiscalcalendar) errors.push('Calendario fiscal obrigatorio');
-  if (!node.taxfiscalcalendar) errors.push('Calendario fiscal de impostos obrigatorio');
-  if (!node.addressNumber) errors.push('Numero do endereco obrigatorio');
-  if (!node.brCityId) errors.push('Cidade obrigatoria');
-  if (!node.state) errors.push('Estado obrigatorio');
+  if (!node.currency) errors.push('validation.currencyRequired');
+  if (!node.fiscalcalendar) errors.push('validation.fiscalCalendarRequired');
+  if (!node.taxfiscalcalendar) errors.push('validation.taxCalendarRequired');
+  if (!node.addressNumber) errors.push('validation.addressNumberRequired');
+  if (!node.brCityId) errors.push('validation.cityRequired');
+  if (!node.state) errors.push('validation.stateRequired');
 
   return errors;
 }
@@ -56,7 +60,7 @@ export function validateNode(node, allNodes) {
 /**
  * Validates the entire tree.
  * @param {Object[]} nodes
- * @returns {{ valid: boolean, nodeErrors: Map<string, string[]> }}
+ * @returns {{ valid: boolean, nodeErrors: Map<string, (string | { key: string, params: object })[]> }}
  */
 export function validateTree(nodes) {
   const nodeErrors = new Map();
@@ -76,7 +80,7 @@ export function validateTree(nodes) {
     return parent && parent._isExisting;
   });
   if (newRoots.length === 0) {
-    nodeErrors.set('_global', ['Nenhuma filial raiz encontrada']);
+    nodeErrors.set('_global', ['validation.noRootFound']);
   }
 
   // Check all parents exist (in full nodes list, including existing)
@@ -84,7 +88,7 @@ export function validateTree(nodes) {
   for (const node of newNodes) {
     if (node.parentClientNodeId !== null && !nodeIds.has(node.parentClientNodeId)) {
       const existing = nodeErrors.get(node.clientNodeId) || [];
-      existing.push('No pai nao encontrado na arvore');
+      existing.push('validation.parentNotFound');
       nodeErrors.set(node.clientNodeId, existing);
     }
   }

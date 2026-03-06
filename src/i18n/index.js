@@ -34,16 +34,22 @@ import esItem from './locales/es/item.json';
 import ptTax from './locales/pt/tax.json';
 import enTax from './locales/en/tax.json';
 import esTax from './locales/es/tax.json';
+import ptSubsidiary from './locales/pt/subsidiary.json';
+import enSubsidiary from './locales/en/subsidiary.json';
+import esSubsidiary from './locales/es/subsidiary.json';
+import ptCoa from './locales/pt/coa.json';
+import enCoa from './locales/en/coa.json';
+import esCoa from './locales/es/coa.json';
 
 i18n.use(initReactI18next).init({
   resources: {
-    pt: { common: ptCommon, home: ptHome, settings: ptSettings, upload: ptUpload, review: ptReview, status: ptStatus, balance: ptBalance, customer: ptCustomer, vendor: ptVendor, item: ptItem, tax: ptTax },
-    en: { common: enCommon, home: enHome, settings: enSettings, upload: enUpload, review: enReview, status: enStatus, balance: enBalance, customer: enCustomer, vendor: enVendor, item: enItem, tax: enTax },
-    es: { common: esCommon, home: esHome, settings: esSettings, upload: esUpload, review: esReview, status: esStatus, balance: esBalance, customer: esCustomer, vendor: esVendor, item: esItem, tax: esTax },
+    pt: { common: ptCommon, home: ptHome, settings: ptSettings, upload: ptUpload, review: ptReview, status: ptStatus, balance: ptBalance, customer: ptCustomer, vendor: ptVendor, item: ptItem, tax: ptTax, subsidiary: ptSubsidiary, coa: ptCoa },
+    en: { common: enCommon, home: enHome, settings: enSettings, upload: enUpload, review: enReview, status: enStatus, balance: enBalance, customer: enCustomer, vendor: enVendor, item: enItem, tax: enTax, subsidiary: enSubsidiary, coa: enCoa },
+    es: { common: esCommon, home: esHome, settings: esSettings, upload: esUpload, review: esReview, status: esStatus, balance: esBalance, customer: esCustomer, vendor: esVendor, item: esItem, tax: esTax, subsidiary: esSubsidiary, coa: esCoa },
   },
   lng: localStorage.getItem('i18n-lang') || 'pt',
   fallbackLng: 'pt',
-  ns: ['common', 'home', 'settings', 'upload', 'review', 'status', 'balance', 'customer', 'vendor', 'item', 'tax'],
+  ns: ['common', 'home', 'settings', 'upload', 'review', 'status', 'balance', 'customer', 'vendor', 'item', 'tax', 'subsidiary', 'coa'],
   defaultNS: 'common',
   interpolation: { escapeValue: false },
 });

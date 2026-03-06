@@ -2,9 +2,9 @@
  * Validacao pura para o modelador de Plano de Contas.
  * Sem dependencias de React — funcoes puras, testavel isoladamente.
  *
- * Segue padrao de subsidiary-validation.js:
- * - validateAllAccounts → Map-based errors/warnings + buckets
- * - computeAccountStatus → 'OK' | 'WARN' | 'ERROR'
+ * Retorna chaves i18n (namespace 'coa') em vez de strings hardcoded.
+ * Mensagens com valores dinamicos usam { key, params }.
+ * Consumers resolve via t(e) ou t(e.key, e.params) at render time.
  */
 
 import { ORPHAN_ROOT_ID, buildAccountMap, buildChildrenMap, normalizeCode } from './coa-modeling.js';
@@ -23,10 +23,10 @@ const BR_CODE_TYPE_MAP = [
 
 /**
  * Verifica se o tipo NetSuite nao corresponde ao grupo contabil brasileiro.
- * Retorna null se ok, ou uma mensagem descritiva se suspeito.
+ * Retorna null se ok, ou um objeto i18n se suspeito.
  * @param {string} code
  * @param {string} type
- * @returns {string|null}
+ * @returns {null | { key: string, params: object }}
  */
 function checkSuspiciousType(code, type) {
   if (!code || !type) return null;
@@ -35,24 +35,23 @@ function checkSuspiciousType(code, type) {
   const rule = BR_CODE_TYPE_MAP.find((r) => r.prefix === firstDigit);
   if (!rule) return null;
   if (rule.types.includes(type)) return null;
-  return `Codigo "${code}" pertence ao grupo ${rule.prefix} (${rule.label}), mas o tipo "${type}" nao e esperado. Tipos esperados: ${rule.types.join(', ')}`;
+  return { key: 'val.typeSuspicious', params: { code, prefix: rule.prefix, group: rule.label, type, expected: rule.types.join(', ') } };
 }
 
 /**
  * Verifica se o nivel da conta (profundidade na arvore) e inconsistente
  * com a quantidade de segmentos do codigo.
- * Ex: codigo "1.01.02" tem 3 segmentos → espera level 2 (0-indexed).
  * @param {string} code
  * @param {number} level
- * @returns {string|null}
+ * @returns {null | { key: string, params: object }}
  */
 export function checkLevelCodeMismatch(code, level) {
   if (!code || typeof code !== 'string') return null;
   const segments = code.split(/[.\-]/).filter(Boolean);
-  if (segments.length <= 1) return null; // raiz, nao da pra inferir
-  const expectedLevel = segments.length - 1; // "1.01.02" → 3 segmentos → level 2
+  if (segments.length <= 1) return null;
+  const expectedLevel = segments.length - 1;
   if (level === expectedLevel) return null;
-  return `Codigo "${code}" tem ${segments.length} segmentos (nivel esperado: ${expectedLevel}), mas esta no nivel ${level} da arvore`;
+  return { key: 'val.levelMismatch', params: { code, segments: segments.length, expected: expectedLevel, actual: level } };
 }
 
 // ── Detectar ciclos ──────────────────────────────────────────────────────────
@@ -71,7 +70,6 @@ export function detectCycles(accounts, accountMap) {
     let current = acct;
     while (current && current.parentClientAccountId) {
       if (visited.has(current.clientAccountId)) {
-        // Marcar todos no ciclo
         for (const id of visited) cycleIds.add(id);
         break;
       }
@@ -86,11 +84,12 @@ export function detectCycles(accounts, accountMap) {
 
 /**
  * Valida todas as contas. Retorna erros e warnings por conta + buckets agregados.
+ * Errors/warnings sao chaves i18n (string ou { key, params }).
  *
  * @param {Object[]} accounts
  * @returns {{
- *   accountErrors: Map<string, string[]>,
- *   accountWarnings: Map<string, string[]>,
+ *   accountErrors: Map<string, (string | { key: string, params: object })[]>,
+ *   accountWarnings: Map<string, (string | { key: string, params: object })[]>,
  *   errorBuckets: { orphans: string[], duplicateCodes: string[], cycles: string[], postingWithChildren: string[], missingFields: string[], nameTooLong: string[] },
  *   warningBuckets: { duplicateNames: string[], levelCodeMismatch: string[], typeSuspicious: string[], codeFormat: string[], tooManyRoots: boolean, immutableChanged: string[], modified: string[] },
  *   hasBlockingErrors: boolean,
@@ -163,11 +162,11 @@ export function validateAllAccounts(accounts) {
 
     // ERRO: campos obrigatorios
     if (!acct.code || !acct.code.trim()) {
-      addError(id, 'Codigo obrigatorio');
+      addError(id, 'val.codeRequired');
       errorBuckets.missingFields.push(id);
     }
     if (!acct.name || !acct.name.trim()) {
-      addError(id, 'Nome obrigatorio');
+      addError(id, 'val.nameRequired');
       if (!errorBuckets.missingFields.includes(id)) {
         errorBuckets.missingFields.push(id);
       }
@@ -175,13 +174,13 @@ export function validateAllAccounts(accounts) {
 
     // ERRO: nome > 60 chars
     if (acct.name && acct.name.length > 60) {
-      addError(id, `Nome tem ${acct.name.length} caracteres (max 60)`);
+      addError(id, { key: 'val.nameTooLong', params: { len: acct.name.length } });
       errorBuckets.nameTooLong.push(id);
     }
 
     // ERRO: codigo duplicado
     if (acct.code && codeCounts.get(acct.code) > 1) {
-      addError(id, `Codigo "${acct.code}" duplicado`);
+      addError(id, { key: 'val.codeDuplicate', params: { code: acct.code } });
       if (!errorBuckets.duplicateCodes.includes(id)) {
         errorBuckets.duplicateCodes.push(id);
       }
@@ -190,27 +189,27 @@ export function validateAllAccounts(accounts) {
     // ERRO: pai nao encontrado (exceto orfaos na quarentena)
     if (acct.parentClientAccountId && acct.parentClientAccountId !== ORPHAN_ROOT_ID) {
       if (!accountMap.has(acct.parentClientAccountId)) {
-        addError(id, 'Conta pai nao encontrada');
+        addError(id, 'val.parentNotFound');
         errorBuckets.orphans.push(id);
       }
     }
 
     // ERRO: orfao na quarentena (conta que esta no bucket ORFAOS)
     if (acct.parentClientAccountId === ORPHAN_ROOT_ID) {
-      addError(id, 'Conta orfao — atribuir a um pai');
+      addError(id, 'val.orphan');
       errorBuckets.orphans.push(id);
     }
 
     // ERRO: ciclo
     if (cycleIds.has(id)) {
-      addError(id, 'Ciclo detectado na hierarquia');
+      addError(id, 'val.cycle');
       errorBuckets.cycles.push(id);
     }
 
     // ERRO: analitica com filhos
     const children = childrenMap.get(id);
     if (acct.isPosting && children && children.length > 0) {
-      addError(id, 'Conta analitica nao pode ter filhos');
+      addError(id, 'val.postingWithChildren');
       errorBuckets.postingWithChildren.push(id);
     }
 
@@ -218,7 +217,7 @@ export function validateAllAccounts(accounts) {
     const nameKey = `${acct.parentClientAccountId || 'ROOT'}|${acct.name.toLowerCase().trim()}`;
     const sameNameSiblings = namesByParent.get(nameKey);
     if (sameNameSiblings && sameNameSiblings.length > 1) {
-      addWarning(id, 'Nome duplicado sob mesmo pai');
+      addWarning(id, 'val.duplicateName');
       if (!warningBuckets.duplicateNames.includes(id)) {
         warningBuckets.duplicateNames.push(id);
       }
@@ -240,14 +239,14 @@ export function validateAllAccounts(accounts) {
 
     // WARNING: formato de codigo
     if (acct.code && !/^\d+(\.\d+)*$/.test(acct.code)) {
-      addWarning(id, 'Formato de codigo nao segue padrao (ex: 1.01.02)');
+      addWarning(id, 'val.codeFormat');
       warningBuckets.codeFormat.push(id);
     }
 
     // WARNING: campo imutavel alterado em conta com _action=update
     if (acct._action === 'update') {
       warningBuckets.immutableChanged.push(id);
-      addWarning(id, 'Codigo e Tipo nao podem ser alterados em contas existentes');
+      addWarning(id, 'val.immutableChanged');
     }
 
     // WARNING: conta modificada pelo usuario (sinalizar visualmente)

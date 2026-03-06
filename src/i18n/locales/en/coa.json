@@ -1,0 +1,72 @@
+{
+  "errors": {
+    "title": "Errors ({{count}})",
+    "orphans": "Orphans",
+    "orphansDesc": "Account references a parent that doesn't exist in the chart.",
+    "orphansFix": "Drag to a valid parent or create the parent account.",
+    "duplicateCodes": "Duplicate codes",
+    "duplicateCodesDesc": "Two or more accounts with the same code.",
+    "duplicateCodesFix": "Edit one of the codes to make it unique.",
+    "cycles": "Cycles",
+    "cyclesDesc": "Circular hierarchy: A parent of B which is parent of A.",
+    "cyclesFix": "Fix the parent field of one of the accounts.",
+    "postingWithChildren": "Posting with children",
+    "postingWithChildrenDesc": "Posting account cannot have sub-accounts in NetSuite.",
+    "postingWithChildrenFix": "Convert to summary (wrench button) or move the children.",
+    "missingFields": "Required fields",
+    "missingFieldsDesc": "Code or name is empty.",
+    "missingFieldsFix": "Fill both — required in NetSuite.",
+    "nameTooLong": "Name > 60 chars",
+    "nameTooLongDesc": "Name exceeds 60 characters (NetSuite limit).",
+    "nameTooLongFix": "Shorten the account name.",
+    "autoFixTitle": "Convert parents to summary"
+  },
+  "warnings": {
+    "title": "Warnings ({{count}})",
+    "duplicateNames": "Duplicate names",
+    "duplicateNamesDesc": "Siblings with identical name under the same parent.",
+    "duplicateNamesFix": "Rename one to avoid confusion.",
+    "typeSuspicious": "Suspicious type",
+    "typeSuspiciousDesc": "Type does not match Brazilian prefix.",
+    "typeSuspiciousFix": "Check: 1=Asset 2=Liability 3=Equity 4=Revenue 5=COGS 6=Expense.",
+    "levelCodeMismatch": "Inconsistent level",
+    "levelCodeMismatchDesc": "Tree depth differs from code segments.",
+    "levelCodeMismatchFix": "Adjust hierarchy or reformat the code.",
+    "codeFormat": "Code format",
+    "codeFormatDesc": "Characters outside dotted numeric pattern.",
+    "codeFormatFix": "Use Normalize in the toolbar or edit manually.",
+    "immutableChanged": "Immutable fields",
+    "immutableChangedDesc": "Code/type of existing accounts are immutable.",
+    "immutableChangedFix": "Revert or delete and recreate the account.",
+    "tooManyRoots": "Too many roots (>10)",
+    "tooManyRootsDesc": "More than 10 roots (unusual in Brazilian chart).",
+    "tooManyRootsFix": "Consolidate into 6-7 top-level groups."
+  },
+  "modified": {
+    "label_one": "{{count}} account modified",
+    "label_other": "{{count}} accounts modified"
+  },
+  "gate": {
+    "blocking_one": "{{count}} blocking issue",
+    "blocking_other": "{{count}} blocking issues",
+    "ready": "Ready to import",
+    "warnings_one": "{{count}} warning",
+    "warnings_other": "{{count}} warnings"
+  },
+  "noProblems": "No issues found",
+  "val": {
+    "codeRequired": "Code is required",
+    "nameRequired": "Name is required",
+    "nameTooLong": "Name has {{len}} characters (max 60)",
+    "codeDuplicate": "Code \"{{code}}\" is duplicated",
+    "parentNotFound": "Parent account not found",
+    "orphan": "Orphan account — assign to a parent",
+    "cycle": "Cycle detected in hierarchy",
+    "postingWithChildren": "Posting account cannot have children",
+    "duplicateName": "Duplicate name under same parent",
+    "typeSuspicious": "Code \"{{code}}\" belongs to group {{prefix}} ({{group}}), but type \"{{type}}\" is not expected. Expected types: {{expected}}",
+    "levelMismatch": "Code \"{{code}}\" has {{segments}} segments (expected level: {{expected}}), but is at level {{actual}} in tree",
+    "codeFormat": "Code format does not follow pattern (e.g. 1.01.02)",
+    "immutableChanged": "Code and Type cannot be changed on existing accounts"
+  }
+}

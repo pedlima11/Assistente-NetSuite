@@ -5,3 +5,4 @@ dist/
 server/data/tax-ai-cache/
 server/data/tax-audit-logs/
 .env
+server/data/credentials.json

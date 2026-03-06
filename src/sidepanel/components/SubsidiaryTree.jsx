@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { computeTreeLayout, CARD_W, CARD_H } from './subsidiary-tree-layout.js';
 import SubsidiaryNodeCard from './SubsidiaryNodeCard.jsx';
 
@@ -13,12 +14,13 @@ import SubsidiaryNodeCard from './SubsidiaryNodeCard.jsx';
  * }} props
  */
 export default function SubsidiaryTree({ nodes, nodeErrors, selectedNodeId, onSelectNode, onAddChild }) {
+  const { t } = useTranslation('subsidiary');
   const layout = useMemo(() => computeTreeLayout(nodes), [nodes]);
 
   if (nodes.length === 0) {
     return (
       <div className="flex items-center justify-center py-12 text-sm text-ocean-60">
-        Nenhuma filial adicionada
+        {t('tree.empty')}
       </div>
     );
   }

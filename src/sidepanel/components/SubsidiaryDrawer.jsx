@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Trash2, Save, Building2 } from 'lucide-react';
+
+/**
+ * Resolve an i18n error entry (string key or { key, params } object).
+ */
+function resolveError(e, t) {
+  if (typeof e === 'string') return t(e);
+  return t(e.key, e.params);
+}
 
 /**
  * Sliding drawer from the right for editing a subsidiary node.
@@ -7,6 +16,7 @@ import { X, Trash2, Save, Building2 } from 'lucide-react';
  * For existing nodes (_isExisting), shows read-only info.
  */
 export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiaries, validationErrors, onSave, onClose, onDelete }) {
+  const { t } = useTranslation('subsidiary');
   const [form, setForm] = useState({});
   const isOpen = node !== null;
   const isRoot = node?.parentClientNodeId === null;
@@ -53,10 +63,10 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
             <div className="sticky top-0 bg-white border-b border-ocean-30 px-5 py-4 flex items-center justify-between z-10">
               <div>
                 <h3 className="text-sm font-semibold text-ocean-180">
-                  {isExisting ? 'Filial Existente' : isRoot ? 'Filial Raiz' : 'Filial'}
+                  {isExisting ? t('drawer.existingTitle') : isRoot ? t('drawer.rootTitle') : t('drawer.defaultTitle')}
                 </h3>
                 <p className="text-xs text-ocean-60 mt-0.5">
-                  {form.name || 'Sem nome'}
+                  {form.name || t('drawer.noName')}
                 </p>
               </div>
               <button
@@ -73,22 +83,22 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
                 <div className="bg-ocean-10 border border-ocean-30 rounded-lg p-4 flex items-start gap-3">
                   <Building2 className="w-5 h-5 text-ocean-120 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-ocean-180">Ja existe no NetSuite</p>
-                    <p className="text-xs text-ocean-60 mt-1">Esta filial nao pode ser editada aqui. Use o NetSuite para modificar.</p>
+                    <p className="text-sm font-medium text-ocean-180">{t('drawer.existsInNetsuite')}</p>
+                    <p className="text-xs text-ocean-60 mt-1">{t('drawer.cannotEditHere')}</p>
                   </div>
                 </div>
 
-                <Field label="Razao Social">
+                <Field label={t('fields.businessName')}>
                   <div className={READONLY_CLASS}>{node.name || '—'}</div>
                 </Field>
 
                 {node.cnpj && (
-                  <Field label="CNPJ">
+                  <Field label={t('fields.cnpj')}>
                     <div className={READONLY_CLASS}>{node.cnpj}</div>
                   </Field>
                 )}
 
-                <Field label="Internal ID">
+                <Field label={t('fields.internalId')}>
                   <div className={READONLY_CLASS}>{node.netsuiteInternalId}</div>
                 </Field>
 
@@ -97,7 +107,7 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
                     onClick={onClose}
                     className="w-full px-4 py-2 text-sm text-ocean-150 border border-ocean-30 rounded-lg hover:bg-ocean-10 transition-colors"
                   >
-                    Fechar
+                    {t('drawer.close')}
                   </button>
                 </div>
               </div>
@@ -108,37 +118,37 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
               {/* Validation errors banner */}
               {validationErrors.length > 0 && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-xs font-medium text-rose mb-1">Campos pendentes:</p>
+                  <p className="text-xs font-medium text-rose mb-1">{t('drawer.pendingFields')}</p>
                   {validationErrors.map((e, i) => (
-                    <p key={i} className="text-xs text-rose">{e}</p>
+                    <p key={i} className="text-xs text-rose">{resolveError(e, t)}</p>
                   ))}
                 </div>
               )}
 
               {/* Razao Social */}
-              <Field label="Razao Social" required>
+              <Field label={t('fields.businessName')} required>
                 <input
                   type="text"
                   value={form.name || ''}
                   onChange={(e) => handleChange('name', e.target.value)}
-                  placeholder="Nome completo da empresa"
+                  placeholder={t('placeholders.businessName')}
                   className={INPUT_CLASS}
                 />
               </Field>
 
               {/* CNPJ */}
-              <Field label="CNPJ">
+              <Field label={t('fields.cnpj')}>
                 <input
                   type="text"
                   value={form.cnpj || ''}
                   onChange={(e) => handleChange('cnpj', e.target.value)}
-                  placeholder="XX.XXX.XXX/XXXX-XX"
+                  placeholder={t('placeholders.cnpjFormat')}
                   className={INPUT_CLASS}
                 />
               </Field>
 
               {/* IE */}
-              <Field label="Inscricao Estadual">
+              <Field label={t('fields.stateRegistration')}>
                 <input
                   type="text"
                   value={form.ie || ''}
@@ -149,14 +159,14 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
 
               {/* Parent subsidiary (NetSuite) — for root or child of existing node */}
               {needsParentSelect && (
-                <Field label="Subsidiary Pai (NetSuite)" required>
+                <Field label={t('fields.parentSubsidiary')} required>
                   {existingSubsidiaries?.length > 0 ? (
                     <select
                       value={form.parent || ''}
                       onChange={(e) => handleChange('parent', e.target.value)}
                       className={INPUT_CLASS}
                     >
-                      <option value="">Selecione...</option>
+                      <option value="">{t('placeholders.select')}</option>
                       {existingSubsidiaries.map((s) => (
                         <option key={s.id} value={s.id}>{s.name} (ID: {s.id})</option>
                       ))}
@@ -166,7 +176,7 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
                       type="text"
                       value={form.parent || ''}
                       onChange={(e) => handleChange('parent', e.target.value)}
-                      placeholder="ID da empresa-mae"
+                      placeholder={t('placeholders.parentId')}
                       className={INPUT_CLASS}
                     />
                   )}
@@ -175,25 +185,25 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
 
               {/* Non-root with new parent: show parent name read-only */}
               {!needsParentSelect && !isRoot && (
-                <Field label="Pai na Arvore">
+                <Field label={t('fields.parentInTree')}>
                   <div className="px-3 py-2 bg-ocean-10 border border-ocean-30 rounded-lg text-sm text-ocean-150">
-                    Definido pela posicao na arvore
+                    {t('fields.treeDefinedPosition')}
                   </div>
                 </Field>
               )}
 
               <div className="border-t border-ocean-30 pt-4 mt-4">
-                <p className="text-xs font-semibold text-ocean-150 uppercase tracking-wide mb-3">Fiscal</p>
+                <p className="text-xs font-semibold text-ocean-150 uppercase tracking-wide mb-3">{t('sections.fiscal')}</p>
 
                 {/* Moeda */}
-                <Field label="Moeda" required>
+                <Field label={t('fields.currency')} required>
                   {lookupData?.currencies?.length > 0 ? (
                     <select
                       value={form.currency || ''}
                       onChange={(e) => handleChange('currency', e.target.value)}
                       className={INPUT_CLASS}
                     >
-                      <option value="">Selecione...</option>
+                      <option value="">{t('placeholders.select')}</option>
                       {lookupData.currencies.map((c) => (
                         <option key={c.id} value={c.id}>{c.name} ({c.symbol})</option>
                       ))}
@@ -203,21 +213,21 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
                       type="text"
                       value={form.currency || ''}
                       onChange={(e) => handleChange('currency', e.target.value)}
-                      placeholder="ID da moeda"
+                      placeholder={t('placeholders.currencyId')}
                       className={INPUT_CLASS}
                     />
                   )}
                 </Field>
 
                 {/* Calendario fiscal impostos */}
-                <Field label="Cal. Fiscal Impostos" required>
+                <Field label={t('fields.taxCalendarTax')} required>
                   {lookupData?.taxFiscalCalendars?.length > 0 ? (
                     <select
                       value={form.taxfiscalcalendar || ''}
                       onChange={(e) => handleChange('taxfiscalcalendar', e.target.value)}
                       className={INPUT_CLASS}
                     >
-                      <option value="">Selecione...</option>
+                      <option value="">{t('placeholders.select')}</option>
                       {lookupData.taxFiscalCalendars.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
@@ -227,21 +237,21 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
                       type="text"
                       value={form.taxfiscalcalendar || ''}
                       onChange={(e) => handleChange('taxfiscalcalendar', e.target.value)}
-                      placeholder="ID do calendario"
+                      placeholder={t('placeholders.calendarId')}
                       className={INPUT_CLASS}
                     />
                   )}
                 </Field>
 
                 {/* Calendario fiscal */}
-                <Field label="Cal. Fiscal" required>
+                <Field label={t('fields.taxCalendar')} required>
                   {lookupData?.fiscalCalendars?.length > 0 ? (
                     <select
                       value={form.fiscalcalendar || ''}
                       onChange={(e) => handleChange('fiscalcalendar', e.target.value)}
                       className={INPUT_CLASS}
                     >
-                      <option value="">Selecione...</option>
+                      <option value="">{t('placeholders.select')}</option>
                       {lookupData.fiscalCalendars.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
@@ -251,7 +261,7 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
                       type="text"
                       value={form.fiscalcalendar || ''}
                       onChange={(e) => handleChange('fiscalcalendar', e.target.value)}
-                      placeholder="ID do calendario"
+                      placeholder={t('placeholders.calendarId')}
                       className={INPUT_CLASS}
                     />
                   )}
@@ -259,10 +269,10 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
               </div>
 
               <div className="border-t border-ocean-30 pt-4 mt-4">
-                <p className="text-xs font-semibold text-ocean-150 uppercase tracking-wide mb-3">Endereco</p>
+                <p className="text-xs font-semibold text-ocean-150 uppercase tracking-wide mb-3">{t('sections.address')}</p>
 
                 {/* Rua */}
-                <Field label="Rua">
+                <Field label={t('fields.street')}>
                   <input
                     type="text"
                     value={form.address || ''}
@@ -272,26 +282,26 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
                 </Field>
 
                 {/* Numero */}
-                <Field label="Numero" required>
+                <Field label={t('fields.number')} required>
                   <input
                     type="text"
                     value={form.addressNumber || ''}
                     onChange={(e) => handleChange('addressNumber', e.target.value)}
-                    placeholder="Ex: 123 ou S/N"
+                    placeholder={t('placeholders.numberExample')}
                     className={INPUT_CLASS}
                   />
                 </Field>
 
                 <div className="grid grid-cols-2 gap-3">
                   {/* Estado */}
-                  <Field label="Estado (UF)" required>
+                  <Field label={t('fields.state')} required>
                     {lookupData?.brStates?.length > 0 ? (
                       <select
                         value={form.state || ''}
                         onChange={(e) => handleChange('state', e.target.value)}
                         className={INPUT_CLASS}
                       >
-                        <option value="">UF</option>
+                        <option value="">{t('placeholders.stateUF')}</option>
                         {lookupData.brStates.map((s) => (
                           <option key={s.id} value={s.id}>{s.id} - {s.name}</option>
                         ))}
@@ -301,33 +311,33 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
                         type="text"
                         value={form.state || ''}
                         onChange={(e) => handleChange('state', e.target.value)}
-                        placeholder="SP"
+                        placeholder={t('placeholders.stateFallback')}
                         className={INPUT_CLASS}
                       />
                     )}
                   </Field>
 
                   {/* CEP */}
-                  <Field label="CEP">
+                  <Field label={t('fields.zipCode')}>
                     <input
                       type="text"
                       value={form.zipCode || ''}
                       onChange={(e) => handleChange('zipCode', e.target.value)}
-                      placeholder="00000-000"
+                      placeholder={t('placeholders.zipFormat')}
                       className={INPUT_CLASS}
                     />
                   </Field>
                 </div>
 
                 {/* Cidade */}
-                <Field label="Cidade" required>
+                <Field label={t('fields.city')} required>
                   {lookupData?.brCities?.length > 0 ? (
                     <select
                       value={form.brCityId || ''}
                       onChange={(e) => handleChange('brCityId', e.target.value)}
                       className={INPUT_CLASS}
                     >
-                      <option value="">Selecione...</option>
+                      <option value="">{t('placeholders.select')}</option>
                       {lookupData.brCities.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
@@ -337,7 +347,7 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
                       type="text"
                       value={form.brCityId || ''}
                       onChange={(e) => handleChange('brCityId', e.target.value)}
-                      placeholder="ID da cidade"
+                      placeholder={t('placeholders.cityId')}
                       className={INPUT_CLASS}
                     />
                   )}
@@ -351,7 +361,7 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
                 <button
                   onClick={() => { onDelete(node.clientNodeId); onClose(); }}
                   className="p-2 text-rose hover:bg-red-50 rounded-lg transition-colors"
-                  title="Excluir filial"
+                  title={t('drawer.deleteTitle')}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -361,14 +371,14 @@ export default function SubsidiaryDrawer({ node, lookupData, existingSubsidiarie
                 onClick={onClose}
                 className="px-4 py-2 text-sm text-ocean-150 border border-ocean-30 rounded-lg hover:bg-ocean-10 transition-colors"
               >
-                Cancelar
+                {t('drawer.cancel')}
               </button>
               <button
                 onClick={handleSave}
                 className="px-4 py-2 text-sm font-medium text-white bg-ocean-120 rounded-lg hover:bg-ocean-150 transition-colors flex items-center gap-1.5"
               >
                 <Save className="w-4 h-4" />
-                Salvar
+                {t('drawer.save')}
               </button>
             </div>
             </>

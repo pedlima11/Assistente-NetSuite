@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle, AlertCircle, XCircle, CheckCircle,
   ChevronDown, ChevronRight, Wrench, Link2Off, Copy, RotateCcw,
@@ -21,6 +22,7 @@ export default function CoaProblemsPanel({
   onFilterChange,
   onAutoFixPostingParents,
 }) {
+  const { t } = useTranslation('coa');
   const [errorsExpanded, setErrorsExpanded] = useState(true);
   const [warningsExpanded, setWarningsExpanded] = useState(true);
 
@@ -29,36 +31,36 @@ export default function CoaProblemsPanel({
   const { errorBuckets, warningBuckets, hasBlockingErrors, errorCount, warningCount } = validationResult;
 
   const errorItems = [
-    { key: 'orphans', label: 'Orfaos', icon: Link2Off, count: errorBuckets.orphans.length,
-      desc: 'Conta referencia um pai que nao existe no plano.', fix: 'Arraste para um pai valido ou crie a conta pai.' },
-    { key: 'duplicateCodes', label: 'Codigos duplicados', icon: Copy, count: errorBuckets.duplicateCodes.length,
-      desc: 'Duas ou mais contas com o mesmo codigo.', fix: 'Edite um dos codigos para torna-lo unico.' },
-    { key: 'cycles', label: 'Ciclos', icon: RotateCcw, count: errorBuckets.cycles.length,
-      desc: 'Hierarquia circular: A pai de B que pai de A.', fix: 'Corrija o campo pai de uma das contas.' },
-    { key: 'postingWithChildren', label: 'Analiticas com filhos', icon: Layers, count: errorBuckets.postingWithChildren.length, hasFix: true,
-      desc: 'Conta analitica nao pode ter sub-contas no NetSuite.', fix: 'Converta em sintetica (botao chave) ou mova as filhas.' },
-    { key: 'missingFields', label: 'Campos obrigatorios', icon: FileQuestion, count: errorBuckets.missingFields.length,
-      desc: 'Codigo ou nome esta vazio.', fix: 'Preencha ambos — obrigatorios no NetSuite.' },
-    { key: 'nameTooLong', label: 'Nome > 60 chars', icon: Type, count: errorBuckets.nameTooLong.length,
-      desc: 'Nome excede 60 caracteres (limite NetSuite).', fix: 'Encurte o nome da conta.' },
+    { key: 'orphans', label: t('errors.orphans'), icon: Link2Off, count: errorBuckets.orphans.length,
+      desc: t('errors.orphansDesc'), fix: t('errors.orphansFix') },
+    { key: 'duplicateCodes', label: t('errors.duplicateCodes'), icon: Copy, count: errorBuckets.duplicateCodes.length,
+      desc: t('errors.duplicateCodesDesc'), fix: t('errors.duplicateCodesFix') },
+    { key: 'cycles', label: t('errors.cycles'), icon: RotateCcw, count: errorBuckets.cycles.length,
+      desc: t('errors.cyclesDesc'), fix: t('errors.cyclesFix') },
+    { key: 'postingWithChildren', label: t('errors.postingWithChildren'), icon: Layers, count: errorBuckets.postingWithChildren.length, hasFix: true,
+      desc: t('errors.postingWithChildrenDesc'), fix: t('errors.postingWithChildrenFix') },
+    { key: 'missingFields', label: t('errors.missingFields'), icon: FileQuestion, count: errorBuckets.missingFields.length,
+      desc: t('errors.missingFieldsDesc'), fix: t('errors.missingFieldsFix') },
+    { key: 'nameTooLong', label: t('errors.nameTooLong'), icon: Type, count: errorBuckets.nameTooLong.length,
+      desc: t('errors.nameTooLongDesc'), fix: t('errors.nameTooLongFix') },
   ].filter((item) => item.count > 0);
 
   const warningItems = [
-    { key: 'duplicateNames', label: 'Nomes duplicados', icon: Copy, count: warningBuckets.duplicateNames.length,
-      desc: 'Irmaos com nome identico sob mesmo pai.', fix: 'Renomeie um para evitar confusao.' },
-    { key: 'typeSuspicious', label: 'Tipo suspeito', icon: AlertTriangle, count: warningBuckets.typeSuspicious.length,
-      desc: 'Tipo nao corresponde ao prefixo brasileiro.', fix: 'Confira: 1=Ativo 2=Passivo 3=PL 4=Receita 5=Custo 6=Despesa.' },
-    { key: 'levelCodeMismatch', label: 'Nivel inconsistente', icon: GitBranch, count: warningBuckets.levelCodeMismatch.length,
-      desc: 'Profundidade na arvore diferente dos segmentos do codigo.', fix: 'Ajuste hierarquia ou reformate o codigo.' },
-    { key: 'codeFormat', label: 'Formato de codigo', icon: Hash, count: warningBuckets.codeFormat.length,
-      desc: 'Caracteres fora do padrao numerico pontilhado.', fix: 'Use Normalizar na barra ou edite manualmente.' },
-    { key: 'immutableChanged', label: 'Campos imutaveis', icon: AlertCircle, count: warningBuckets.immutableChanged.length,
-      desc: 'Codigo/tipo de contas existentes sao imutaveis.', fix: 'Reverta ou delete e recrie a conta.' },
+    { key: 'duplicateNames', label: t('warnings.duplicateNames'), icon: Copy, count: warningBuckets.duplicateNames.length,
+      desc: t('warnings.duplicateNamesDesc'), fix: t('warnings.duplicateNamesFix') },
+    { key: 'typeSuspicious', label: t('warnings.typeSuspicious'), icon: AlertTriangle, count: warningBuckets.typeSuspicious.length,
+      desc: t('warnings.typeSuspiciousDesc'), fix: t('warnings.typeSuspiciousFix') },
+    { key: 'levelCodeMismatch', label: t('warnings.levelCodeMismatch'), icon: GitBranch, count: warningBuckets.levelCodeMismatch.length,
+      desc: t('warnings.levelCodeMismatchDesc'), fix: t('warnings.levelCodeMismatchFix') },
+    { key: 'codeFormat', label: t('warnings.codeFormat'), icon: Hash, count: warningBuckets.codeFormat.length,
+      desc: t('warnings.codeFormatDesc'), fix: t('warnings.codeFormatFix') },
+    { key: 'immutableChanged', label: t('warnings.immutableChanged'), icon: AlertCircle, count: warningBuckets.immutableChanged.length,
+      desc: t('warnings.immutableChangedDesc'), fix: t('warnings.immutableChangedFix') },
   ].filter((item) => item.count > 0);
 
   if (warningBuckets.tooManyRoots) {
-    warningItems.push({ key: 'tooManyRoots', label: 'Muitas raizes (>10)', icon: AlertTriangle, count: 0,
-      desc: 'Mais de 10 raizes (incomum no plano brasileiro).', fix: 'Consolide em 6-7 grupos de primeiro nivel.' });
+    warningItems.push({ key: 'tooManyRoots', label: t('warnings.tooManyRoots'), icon: AlertTriangle, count: 0,
+      desc: t('warnings.tooManyRootsDesc'), fix: t('warnings.tooManyRootsFix') });
   }
 
   function handleClick(key) {
@@ -80,7 +82,7 @@ export default function CoaProblemsPanel({
               <ChevronRight className="w-3.5 h-3.5 text-rose" />
             )}
             <XCircle className="w-3.5 h-3.5 text-rose" />
-            <span className="text-xs font-medium text-rose flex-1">Erros ({errorCount})</span>
+            <span className="text-xs font-medium text-rose flex-1">{t('errors.title', { count: errorCount })}</span>
           </button>
 
           {errorsExpanded && (
@@ -111,7 +113,7 @@ export default function CoaProblemsPanel({
                       {item.hasFix && item.count > 0 && (
                         <button
                           onClick={onAutoFixPostingParents}
-                          title="Converter pais em sinteticas"
+                          title={t('errors.autoFixTitle')}
                           className="p-1 rounded hover:bg-rose/10 text-rose transition-colors"
                         >
                           <Wrench className="w-3 h-3" />
@@ -145,7 +147,7 @@ export default function CoaProblemsPanel({
               <ChevronRight className="w-3.5 h-3.5 text-golden" />
             )}
             <AlertTriangle className="w-3.5 h-3.5 text-golden" />
-            <span className="text-xs font-medium text-golden flex-1">Avisos ({warningCount})</span>
+            <span className="text-xs font-medium text-golden flex-1">{t('warnings.title', { count: warningCount })}</span>
           </button>
 
           {warningsExpanded && (
@@ -198,7 +200,7 @@ export default function CoaProblemsPanel({
           >
             <Pencil className="w-3.5 h-3.5 text-ocean-120" />
             <span className="text-xs font-medium text-ocean-150 flex-1">
-              {warningBuckets.modified.length} conta{warningBuckets.modified.length !== 1 ? 's' : ''} alterada{warningBuckets.modified.length !== 1 ? 's' : ''}
+              {t('modified.label', { count: warningBuckets.modified.length })}
             </span>
           </button>
         </div>
@@ -215,18 +217,18 @@ export default function CoaProblemsPanel({
             <>
               <XCircle className="w-4 h-4 text-rose" />
               <span className="text-xs font-medium text-rose">
-                {errorCount} problema{errorCount !== 1 ? 's' : ''} bloqueante{errorCount !== 1 ? 's' : ''}
+                {t('gate.blocking', { count: errorCount })}
               </span>
             </>
           ) : (
             <>
               <CheckCircle className="w-4 h-4 text-pine" />
-              <span className="text-xs font-medium text-pine">Pronto para importar</span>
+              <span className="text-xs font-medium text-pine">{t('gate.ready')}</span>
             </>
           )}
         </div>
         {warningCount > 0 && !hasBlockingErrors && (
-          <p className="text-[10px] text-golden mt-1 ml-6">{warningCount} aviso{warningCount !== 1 ? 's' : ''}</p>
+          <p className="text-[10px] text-golden mt-1 ml-6">{t('gate.warnings', { count: warningCount })}</p>
         )}
       </div>
 
@@ -234,7 +236,7 @@ export default function CoaProblemsPanel({
       {errorItems.length === 0 && warningItems.length === 0 && (
         <div className="text-center py-4">
           <CheckCircle className="w-6 h-6 text-pine mx-auto mb-1" />
-          <p className="text-xs text-pine">Nenhum problema encontrado</p>
+          <p className="text-xs text-pine">{t('noProblems')}</p>
         </div>
       )}
     </div>

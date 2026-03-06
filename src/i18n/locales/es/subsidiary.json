@@ -1,0 +1,98 @@
+{
+  "drawer": {
+    "existingTitle": "Filial Existente",
+    "rootTitle": "Filial Raiz",
+    "defaultTitle": "Filial",
+    "noName": "Sin nombre",
+    "existsInNetsuite": "Ya existe en NetSuite",
+    "cannotEditHere": "Esta filial no puede ser editada aqui. Use NetSuite para modificar.",
+    "pendingFields": "Campos pendientes:",
+    "close": "Cerrar",
+    "deleteTitle": "Eliminar filial",
+    "cancel": "Cancelar",
+    "save": "Guardar"
+  },
+  "fields": {
+    "businessName": "Razon Social",
+    "cnpj": "CNPJ",
+    "internalId": "Internal ID",
+    "stateRegistration": "Inscripcion Estadual",
+    "parentSubsidiary": "Filial Padre (NetSuite)",
+    "parentInTree": "Padre en el Arbol",
+    "treeDefinedPosition": "Definido por la posicion en el arbol",
+    "currency": "Moneda",
+    "taxCalendarTax": "Cal. Fiscal Impuestos",
+    "taxCalendarTaxShort": "Cal. Fiscal Imp.",
+    "taxCalendar": "Cal. Fiscal",
+    "street": "Calle",
+    "number": "Numero",
+    "state": "Estado (UF)",
+    "zipCode": "Codigo Postal",
+    "city": "Ciudad",
+    "cityBrazil": "Ciudad Brasil",
+    "addressStreet": "Direccion (Calle)",
+    "subsidiaryData": "Datos de la Filial"
+  },
+  "sections": {
+    "fiscal": "Fiscal",
+    "address": "Direccion"
+  },
+  "placeholders": {
+    "businessName": "Nombre completo de la empresa",
+    "cnpjFormat": "XX.XXX.XXX/XXXX-XX",
+    "select": "Seleccione...",
+    "parentId": "ID de la empresa matriz",
+    "currencyId": "ID de la moneda",
+    "currencyBRL": "ID de la moneda BRL",
+    "calendarId": "ID del calendario",
+    "cityId": "ID de la ciudad",
+    "stateUF": "UF",
+    "stateFallback": "SP",
+    "stateExample": "Ej: SP",
+    "numberExample": "Ej: 123 o S/N",
+    "numberExampleShort": "Ej: 123",
+    "zipFormat": "00000-000"
+  },
+  "builder": {
+    "title": "Estructura Societaria",
+    "existing_one": "{{count}} existente",
+    "existing_other": "{{count}} existentes",
+    "new_one": "{{count}} nueva",
+    "new_other": "{{count}} nuevas",
+    "validated": "Validado",
+    "incomplete": "Incompleto",
+    "hintExisting": "Filiales grises ya existen en NetSuite. Haga clic en \"+ Filial\" para agregar nuevas.",
+    "hintNew": "Haga clic en una filial para editar. Use \"+ Filial\" para agregar filiales hijas."
+  },
+  "card": {
+    "newSubsidiary": "Nueva Filial",
+    "noCnpj": "Sin CNPJ",
+    "addChild": "Filial"
+  },
+  "status": {
+    "draft": "Borrador",
+    "ready": "Listo",
+    "creating": "Creando...",
+    "created": "Creado",
+    "error": "Error",
+    "existing": "NetSuite"
+  },
+  "tree": {
+    "empty": "Ninguna filial agregada"
+  },
+  "validation": {
+    "nameRequired": "Razon Social obligatoria",
+    "cnpjDigits": "CNPJ debe tener 14 digitos",
+    "cnpjDuplicate": "CNPJ duplicado con \"{{name}}\"",
+    "otherSubsidiary": "otra filial",
+    "parentRequired": "Filial padre obligatoria",
+    "currencyRequired": "Moneda obligatoria",
+    "fiscalCalendarRequired": "Calendario fiscal obligatorio",
+    "taxCalendarRequired": "Calendario fiscal de impuestos obligatorio",
+    "addressNumberRequired": "Numero de direccion obligatorio",
+    "cityRequired": "Ciudad obligatoria",
+    "stateRequired": "Estado obligatorio",
+    "noRootFound": "Ninguna filial raiz encontrada",
+    "parentNotFound": "Nodo padre no encontrado en el arbol"
+  }
+}

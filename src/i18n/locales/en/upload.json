@@ -9,5 +9,12 @@
   "parsing": "Extracting data from Excel...",
   "structuring": "Structuring data with Claude AI...",
   "processing": "Processing...",
-  "processFile": "Process File"
+  "processFile": "Process File",
+  "processFiles": "Process File(s)",
+  "primaryFileLabel": "Chart of Accounts / Balance Sheet",
+  "primaryFileSubtitle": "Complete file or balance sheet accounts only (groups 1, 2, 3)",
+  "secondaryFileLabel": "Income Statement (optional)",
+  "secondaryFileSubtitle": "Revenue, Costs and Expenses (groups 4, 5, 6)",
+  "emptyFiles": "Neither file contains data. Please check the files and try again.",
+  "duplicateWarning": "Found {{count}} accounts with duplicate codes between files. Review the result carefully."
 }

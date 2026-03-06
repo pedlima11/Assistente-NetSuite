@@ -1,0 +1,98 @@
+{
+  "drawer": {
+    "existingTitle": "Existing Subsidiary",
+    "rootTitle": "Root Subsidiary",
+    "defaultTitle": "Subsidiary",
+    "noName": "No name",
+    "existsInNetsuite": "Already exists in NetSuite",
+    "cannotEditHere": "This subsidiary cannot be edited here. Use NetSuite to modify.",
+    "pendingFields": "Pending fields:",
+    "close": "Close",
+    "deleteTitle": "Delete subsidiary",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "fields": {
+    "businessName": "Business Name",
+    "cnpj": "CNPJ",
+    "internalId": "Internal ID",
+    "stateRegistration": "State Registration",
+    "parentSubsidiary": "Parent Subsidiary (NetSuite)",
+    "parentInTree": "Parent in Tree",
+    "treeDefinedPosition": "Defined by position in the tree",
+    "currency": "Currency",
+    "taxCalendarTax": "Tax Fiscal Calendar",
+    "taxCalendarTaxShort": "Tax Fiscal Cal.",
+    "taxCalendar": "Fiscal Calendar",
+    "street": "Street",
+    "number": "Number",
+    "state": "State",
+    "zipCode": "Zip Code",
+    "city": "City",
+    "cityBrazil": "City (Brazil)",
+    "addressStreet": "Address (Street)",
+    "subsidiaryData": "Subsidiary Data"
+  },
+  "sections": {
+    "fiscal": "Fiscal",
+    "address": "Address"
+  },
+  "placeholders": {
+    "businessName": "Full company name",
+    "cnpjFormat": "XX.XXX.XXX/XXXX-XX",
+    "select": "Select...",
+    "parentId": "Parent company ID",
+    "currencyId": "Currency ID",
+    "currencyBRL": "Currency ID (BRL)",
+    "calendarId": "Calendar ID",
+    "cityId": "City ID",
+    "stateUF": "State",
+    "stateFallback": "SP",
+    "stateExample": "e.g. SP",
+    "numberExample": "e.g. 123 or N/A",
+    "numberExampleShort": "e.g. 123",
+    "zipFormat": "00000-000"
+  },
+  "builder": {
+    "title": "Corporate Structure",
+    "existing_one": "{{count}} existing",
+    "existing_other": "{{count}} existing",
+    "new_one": "{{count}} new",
+    "new_other": "{{count}} new",
+    "validated": "Validated",
+    "incomplete": "Incomplete",
+    "hintExisting": "Gray subsidiaries already exist in NetSuite. Click \"+ Subsidiary\" to add new ones.",
+    "hintNew": "Click a subsidiary to edit. Use \"+ Subsidiary\" to add child subsidiaries."
+  },
+  "card": {
+    "newSubsidiary": "New Subsidiary",
+    "noCnpj": "No CNPJ",
+    "addChild": "Subsidiary"
+  },
+  "status": {
+    "draft": "Draft",
+    "ready": "Ready",
+    "creating": "Creating...",
+    "created": "Created",
+    "error": "Error",
+    "existing": "NetSuite"
+  },
+  "tree": {
+    "empty": "No subsidiaries added"
+  },
+  "validation": {
+    "nameRequired": "Business name is required",
+    "cnpjDigits": "CNPJ must have 14 digits",
+    "cnpjDuplicate": "Duplicate CNPJ with \"{{name}}\"",
+    "otherSubsidiary": "another subsidiary",
+    "parentRequired": "Parent subsidiary is required",
+    "currencyRequired": "Currency is required",
+    "fiscalCalendarRequired": "Fiscal calendar is required",
+    "taxCalendarRequired": "Tax fiscal calendar is required",
+    "addressNumberRequired": "Address number is required",
+    "cityRequired": "City is required",
+    "stateRequired": "State is required",
+    "noRootFound": "No root subsidiary found",
+    "parentNotFound": "Parent node not found in tree"
+  }
+}

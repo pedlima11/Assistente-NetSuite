@@ -1,0 +1,72 @@
+{
+  "errors": {
+    "title": "Errores ({{count}})",
+    "orphans": "Huerfanos",
+    "orphansDesc": "La cuenta referencia un padre que no existe en el plan.",
+    "orphansFix": "Arrastre a un padre valido o cree la cuenta padre.",
+    "duplicateCodes": "Codigos duplicados",
+    "duplicateCodesDesc": "Dos o mas cuentas con el mismo codigo.",
+    "duplicateCodesFix": "Edite uno de los codigos para hacerlo unico.",
+    "cycles": "Ciclos",
+    "cyclesDesc": "Jerarquia circular: A padre de B que es padre de A.",
+    "cyclesFix": "Corrija el campo padre de una de las cuentas.",
+    "postingWithChildren": "Analiticas con hijos",
+    "postingWithChildrenDesc": "Cuenta analitica no puede tener sub-cuentas en NetSuite.",
+    "postingWithChildrenFix": "Convierta en sintetica (boton llave) o mueva los hijos.",
+    "missingFields": "Campos obligatorios",
+    "missingFieldsDesc": "Codigo o nombre esta vacio.",
+    "missingFieldsFix": "Complete ambos — obligatorios en NetSuite.",
+    "nameTooLong": "Nombre > 60 chars",
+    "nameTooLongDesc": "Nombre excede 60 caracteres (limite NetSuite).",
+    "nameTooLongFix": "Acorte el nombre de la cuenta.",
+    "autoFixTitle": "Convertir padres en sinteticas"
+  },
+  "warnings": {
+    "title": "Avisos ({{count}})",
+    "duplicateNames": "Nombres duplicados",
+    "duplicateNamesDesc": "Hermanos con nombre identico bajo el mismo padre.",
+    "duplicateNamesFix": "Renombre uno para evitar confusion.",
+    "typeSuspicious": "Tipo sospechoso",
+    "typeSuspiciousDesc": "Tipo no corresponde al prefijo brasileno.",
+    "typeSuspiciousFix": "Verifique: 1=Activo 2=Pasivo 3=PL 4=Ingreso 5=Costo 6=Gasto.",
+    "levelCodeMismatch": "Nivel inconsistente",
+    "levelCodeMismatchDesc": "Profundidad en el arbol diferente de los segmentos del codigo.",
+    "levelCodeMismatchFix": "Ajuste jerarquia o reformatee el codigo.",
+    "codeFormat": "Formato de codigo",
+    "codeFormatDesc": "Caracteres fuera del patron numerico punteado.",
+    "codeFormatFix": "Use Normalizar en la barra o edite manualmente.",
+    "immutableChanged": "Campos inmutables",
+    "immutableChangedDesc": "Codigo/tipo de cuentas existentes son inmutables.",
+    "immutableChangedFix": "Revierta o elimine y recree la cuenta.",
+    "tooManyRoots": "Muchas raices (>10)",
+    "tooManyRootsDesc": "Mas de 10 raices (inusual en plan brasileno).",
+    "tooManyRootsFix": "Consolide en 6-7 grupos de primer nivel."
+  },
+  "modified": {
+    "label_one": "{{count}} cuenta modificada",
+    "label_other": "{{count}} cuentas modificadas"
+  },
+  "gate": {
+    "blocking_one": "{{count}} problema bloqueante",
+    "blocking_other": "{{count}} problemas bloqueantes",
+    "ready": "Listo para importar",
+    "warnings_one": "{{count}} aviso",
+    "warnings_other": "{{count}} avisos"
+  },
+  "noProblems": "Ningun problema encontrado",
+  "val": {
+    "codeRequired": "Codigo obligatorio",
+    "nameRequired": "Nombre obligatorio",
+    "nameTooLong": "Nombre tiene {{len}} caracteres (max 60)",
+    "codeDuplicate": "Codigo \"{{code}}\" duplicado",
+    "parentNotFound": "Cuenta padre no encontrada",
+    "orphan": "Cuenta huerfana — asignar a un padre",
+    "cycle": "Ciclo detectado en la jerarquia",
+    "postingWithChildren": "Cuenta analitica no puede tener hijos",
+    "duplicateName": "Nombre duplicado bajo el mismo padre",
+    "typeSuspicious": "Codigo \"{{code}}\" pertenece al grupo {{prefix}} ({{group}}), pero el tipo \"{{type}}\" no es esperado. Tipos esperados: {{expected}}",
+    "levelMismatch": "Codigo \"{{code}}\" tiene {{segments}} segmentos (nivel esperado: {{expected}}), pero esta en el nivel {{actual}} del arbol",
+    "codeFormat": "Formato de codigo no sigue patron (ej: 1.01.02)",
+    "immutableChanged": "Codigo y Tipo no pueden ser alterados en cuentas existentes"
+  }
+}

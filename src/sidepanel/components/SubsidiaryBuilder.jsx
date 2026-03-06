@@ -1,8 +1,17 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Building2, AlertTriangle } from 'lucide-react';
 import SubsidiaryTree from './SubsidiaryTree.jsx';
 import SubsidiaryDrawer from './SubsidiaryDrawer.jsx';
 import { validateTree, computeNodeStatus } from './subsidiary-validation.js';
+
+/**
+ * Resolve an i18n error entry (string key or { key, params } object).
+ */
+function resolveError(e, t) {
+  if (typeof e === 'string') return t(e);
+  return t(e.key, e.params);
+}
 
 /**
  * Normaliza texto para comparacao (remove acentos, lowercase).
@@ -128,6 +137,7 @@ function createNodeFromSubsidiary(sub, parentClientNodeId) {
  * }} props
  */
 export default function SubsidiaryBuilder({ initialSubsidiary, lookupData, onNodesChange }) {
+  const { t } = useTranslation('subsidiary');
   // newNodes: only user-created nodes (editable)
   const [newNodes, setNewNodes] = useState([]);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
@@ -245,24 +255,24 @@ export default function SubsidiaryBuilder({ initialSubsidiary, lookupData, onNod
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Building2 className="w-5 h-5 text-ocean-120" />
-          <h3 className="text-sm font-semibold text-ocean-180">Estrutura Societaria</h3>
+          <h3 className="text-sm font-semibold text-ocean-180">{t('builder.title')}</h3>
         </div>
         <div className="flex items-center gap-3">
           {existingNodes.length > 0 && (
             <span className="text-xs text-ocean-60">
-              {existingNodes.length} existente{existingNodes.length !== 1 ? 's' : ''}
+              {t('builder.existing', { count: existingNodes.length })}
             </span>
           )}
           {newCount > 0 && (
             <span className="text-xs text-ocean-120 font-medium">
-              {newCount} nova{newCount !== 1 ? 's' : ''}
+              {t('builder.new', { count: newCount })}
             </span>
           )}
           {newCount > 0 && (
             valid ? (
-              <span className="text-xs text-pine font-medium">Validado</span>
+              <span className="text-xs text-pine font-medium">{t('builder.validated')}</span>
             ) : (
-              <span className="text-xs text-golden font-medium">Incompleto</span>
+              <span className="text-xs text-golden font-medium">{t('builder.incomplete')}</span>
             )
           )}
         </div>
@@ -274,7 +284,7 @@ export default function SubsidiaryBuilder({ initialSubsidiary, lookupData, onNod
           <AlertTriangle className="w-4 h-4 text-rose flex-shrink-0 mt-0.5" />
           <div>
             {globalErrors.map((e, i) => (
-              <p key={i} className="text-xs text-rose">{e}</p>
+              <p key={i} className="text-xs text-rose">{resolveError(e, t)}</p>
             ))}
           </div>
         </div>
@@ -283,8 +293,8 @@ export default function SubsidiaryBuilder({ initialSubsidiary, lookupData, onNod
       {/* Hint */}
       <p className="text-xs text-ocean-60 mb-3">
         {existingNodes.length > 0
-          ? 'Filiais cinza ja existem no NetSuite. Clique em "+ Filial" para adicionar novas.'
-          : 'Clique em uma filial para editar. Use "+ Filial" para adicionar subsidiarias filhas.'
+          ? t('builder.hintExisting')
+          : t('builder.hintNew')
         }
       </p>
 

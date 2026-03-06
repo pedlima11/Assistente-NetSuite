@@ -9,5 +9,12 @@
   "parsing": "Extraindo dados do Excel...",
   "structuring": "Estruturando dados com Claude AI...",
   "processing": "Processando...",
-  "processFile": "Processar Arquivo"
+  "processFile": "Processar Arquivo",
+  "processFiles": "Processar Arquivo(s)",
+  "primaryFileLabel": "Plano de Contas / Balanco Patrimonial",
+  "primaryFileSubtitle": "Arquivo completo ou apenas contas patrimoniais (grupos 1, 2, 3)",
+  "secondaryFileLabel": "Contas de Resultado (opcional)",
+  "secondaryFileSubtitle": "Receitas, Custos e Despesas (grupos 4, 5, 6)",
+  "emptyFiles": "Nenhum dos arquivos contem dados. Verifique os arquivos e tente novamente.",
+  "duplicateWarning": "Encontradas {{count}} contas com codigos duplicados entre os arquivos. Revise o resultado com atencao."
 }
