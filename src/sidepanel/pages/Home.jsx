@@ -1,73 +1,31 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Settings, ListTree, Receipt,
   Users, Truck, Package, ChevronRight, MapPin, Building2
 } from 'lucide-react';
 
-const ROADMAP_STEPS = [
+const STEP_META = [
+  { key: 'settings', icon: Settings, path: '/settings', state: null },
   {
-    title: 'Configuracao',
-    description: 'Cadastre as credenciais OAuth do NetSuite e a chave da Claude API para conectar o assistente.',
-    buttonLabel: 'Configurar',
-    icon: Settings,
-    path: '/settings',
-    state: null,
+    key: 'coa', icon: ListTree, path: '/upload', state: { importType: 'plano-de-contas' },
+    secondaryButton: { icon: Building2, path: '/review', state: { subsidiaryOnly: true } },
   },
-  {
-    title: 'Filial & Plano de Contas',
-    description: 'Crie a filial no NetSuite e/ou importe o plano de contas a partir de uma planilha.',
-    buttonLabel: 'Importar Planilha',
-    icon: ListTree,
-    path: '/upload',
-    state: { importType: 'plano-de-contas' },
-    secondaryButton: {
-      label: 'Criar Filial',
-      icon: Building2,
-      path: '/review',
-      state: { subsidiaryOnly: true },
-    },
-  },
-  {
-    title: 'Clientes',
-    description: 'Importe o cadastro de clientes da empresa a partir de planilhas.',
-    buttonLabel: 'Importar',
-    icon: Users,
-    path: '/customer-import',
-    state: null,
-  },
-  {
-    title: 'Fornecedores',
-    description: 'Importe o cadastro de fornecedores da empresa a partir de planilhas.',
-    buttonLabel: 'Importar',
-    icon: Truck,
-    path: '/vendor-import',
-    state: null,
-  },
-  {
-    title: 'Itens',
-    description: 'Importe o cadastro de produtos e servicos da empresa.',
-    buttonLabel: 'Importar',
-    icon: Package,
-    path: '/item-import',
-    state: null,
-  },
-  {
-    title: 'Regras Fiscais',
-    description: 'Importe XMLs de NF-e para regras de saida e arquivos SPED para regras de entrada.',
-    buttonLabel: 'Gerar Regras',
-    icon: Receipt,
-    path: '/tax-rules',
-    state: null,
-  },
+  { key: 'customers', icon: Users, path: '/customer-import', state: null },
+  { key: 'vendors', icon: Truck, path: '/vendor-import', state: null },
+  { key: 'items', icon: Package, path: '/item-import', state: null },
+  { key: 'taxRules', icon: Receipt, path: '/tax-rules', state: null },
 ];
 
 
 export default function Home() {
   const navigate = useNavigate();
+  const { t } = useTranslation('home');
   const [activeStep, setActiveStep] = useState(0);
 
-  const currentStep = ROADMAP_STEPS[activeStep];
+  const meta = STEP_META[activeStep];
+  const StepIcon = meta.icon;
 
   return (
     <div className="relative min-h-screen -m-6 p-6">
@@ -79,7 +37,7 @@ export default function Home() {
       {/* Header */}
       <div className="flex flex-col items-center mb-6">
         <img src="./logo-netsuite.png" alt="Oracle NetSuite" className="h-16 mb-2" />
-        <p className="text-sm text-ocean-60">Setup Assistant</p>
+        <p className="text-sm text-ocean-60">{t('common:setupAssistant')}</p>
       </div>
 
       {/* Decorative bar */}
@@ -91,7 +49,7 @@ export default function Home() {
       <div>
           <div className="flex items-center gap-2 mb-6">
             <MapPin className="w-5 h-5 text-ocean-120" />
-            <h2 className="text-base font-semibold text-ocean-180">Roteiro de Implantacao</h2>
+            <h2 className="text-base font-semibold text-ocean-180">{t('roadmapTitle')}</h2>
           </div>
 
           {/* Stepper - Desktop (horizontal) */}
@@ -100,12 +58,12 @@ export default function Home() {
               {/* Connecting line */}
               <div className="absolute top-4 left-8 right-8 h-0.5 bg-ocean-30" />
 
-              {ROADMAP_STEPS.map((step, index) => (
+              {STEP_META.map((step, index) => (
                 <button
-                  key={step.title}
+                  key={step.key}
                   onClick={() => setActiveStep(index)}
                   className="relative flex flex-col items-center cursor-pointer group"
-                  style={{ width: `${100 / ROADMAP_STEPS.length}%` }}
+                  style={{ width: `${100 / STEP_META.length}%` }}
                 >
                   <div
                     className={`
@@ -125,7 +83,7 @@ export default function Home() {
                       ${index === activeStep ? 'text-ocean-180 font-semibold' : 'text-ocean-60 group-hover:text-ocean-120'}
                     `}
                   >
-                    {step.title}
+                    {t(`steps.${step.key}.title`)}
                   </span>
                 </button>
               ))}
@@ -134,9 +92,9 @@ export default function Home() {
 
           {/* Stepper - Mobile (vertical) */}
           <div className="md:hidden flex flex-col gap-1 mb-2">
-            {ROADMAP_STEPS.map((step, index) => (
+            {STEP_META.map((step, index) => (
               <button
-                key={step.title}
+                key={step.key}
                 onClick={() => setActiveStep(index)}
                 className={`
                   flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all
@@ -155,7 +113,7 @@ export default function Home() {
                   {index + 1}
                 </div>
                 <span className={`text-sm ${index === activeStep ? 'text-ocean-180 font-medium' : 'text-ocean-60'}`}>
-                  {step.title}
+                  {t(`steps.${step.key}.title`)}
                 </span>
               </button>
             ))}
@@ -165,34 +123,34 @@ export default function Home() {
           <div className="mt-6 bg-white rounded-lg border border-ocean-30 p-6 shadow-sm">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-lg bg-ocean-30 flex items-center justify-center flex-shrink-0">
-                <currentStep.icon className="w-5 h-5 text-ocean-120" />
+                <StepIcon className="w-5 h-5 text-ocean-120" />
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-xs font-medium text-ocean-120 bg-ocean-30 px-2 py-0.5 rounded-full">
-                  Passo {activeStep + 1} de {ROADMAP_STEPS.length}
+                  {t('stepOf', { current: activeStep + 1, total: STEP_META.length })}
                 </span>
-                <h3 className="text-base font-semibold text-ocean-180 mt-2 mb-1">{currentStep.title}</h3>
-                <p className="text-sm text-ocean-60 leading-relaxed">{currentStep.description}</p>
+                <h3 className="text-base font-semibold text-ocean-180 mt-2 mb-1">{t(`steps.${meta.key}.title`)}</h3>
+                <p className="text-sm text-ocean-60 leading-relaxed">{t(`steps.${meta.key}.description`)}</p>
               </div>
               <div className="flex gap-2 flex-shrink-0">
-                {currentStep.secondaryButton && (
+                {meta.secondaryButton && (
                   <button
                     onClick={() => {
                       sessionStorage.setItem('subsidiaryOnly', 'true');
                       sessionStorage.removeItem('reviewData');
-                      navigate(currentStep.secondaryButton.path, { state: currentStep.secondaryButton.state });
+                      navigate(meta.secondaryButton.path, { state: meta.secondaryButton.state });
                     }}
                     className="flex items-center gap-1.5 bg-white border border-ocean-120 text-ocean-120 text-sm font-medium px-4 py-2 rounded-lg hover:bg-ocean-10 transition-colors cursor-pointer"
                   >
                     <Building2 className="w-4 h-4" />
-                    {currentStep.secondaryButton.label}
+                    {t(`steps.${meta.key}.secondaryButton`)}
                   </button>
                 )}
                 <button
-                  onClick={() => navigate(currentStep.path, { state: currentStep.state })}
+                  onClick={() => navigate(meta.path, { state: meta.state })}
                   className="flex items-center gap-1.5 bg-ocean-120 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-ocean-150 transition-colors cursor-pointer"
                 >
-                  {currentStep.buttonLabel}
+                  {t(`steps.${meta.key}.button`)}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>

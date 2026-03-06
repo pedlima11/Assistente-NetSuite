@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ArrowRight, Loader2, Building2, Plus, List } from 'lucide-react';
 import SubsidiaryBuilder from '../components/SubsidiaryBuilder.jsx';
 import CoaModeler from '../components/CoaModeler.jsx';
@@ -8,6 +9,7 @@ import { MessageType } from '../../types/messages.js';
 import { computeImportKey } from '../../utils/progress-store.js';
 
 export default function Review() {
+  const { t } = useTranslation('review');
   const navigate = useNavigate();
   const [initialSubsidiary, setInitialSubsidiary] = useState(null);
   const [subsidiaryNodes, setSubsidiaryNodes] = useState([]);
@@ -139,7 +141,7 @@ export default function Review() {
 
   function handleProceed() {
     if (mode === 'existing' && !selectedSubsidiaryId) {
-      alert('Selecione uma subsidiary antes de continuar');
+      alert(t('selectSubsidiaryFirst'));
       return;
     }
     setShowConfirm(true);
@@ -178,13 +180,13 @@ export default function Review() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-medium text-ocean-180">Revisao dos Dados</h2>
+        <h2 className="text-base font-medium text-ocean-180">{t('title')}</h2>
         <button
           onClick={() => navigate(subsidiaryOnly ? '/' : '/upload')}
           className="text-sm text-ocean-150 hover:text-ocean-180 flex items-center gap-1"
         >
           <ArrowLeft className="w-3 h-3" />
-          Voltar
+          {t('back')}
         </button>
       </div>
 
@@ -193,7 +195,7 @@ export default function Review() {
         <div className="bg-white rounded-lg border border-ocean-30 p-4">
           <div className="flex items-center gap-2 mb-3">
             <Building2 className="w-5 h-5 text-ocean-120" />
-            <h3 className="text-sm font-medium text-ocean-180">Subsidiary</h3>
+            <h3 className="text-sm font-medium text-ocean-180">{t('subsidiary')}</h3>
           </div>
 
           <div className="flex gap-2 mb-3">
@@ -206,7 +208,7 @@ export default function Review() {
               }`}
             >
               <Plus className="w-3 h-3" />
-              Criar Nova
+              {t('createNew')}
             </button>
             <button
               onClick={() => handleModeChange('existing')}
@@ -217,7 +219,7 @@ export default function Review() {
               }`}
             >
               <List className="w-3 h-3" />
-              Usar Existente
+              {t('useExisting')}
             </button>
           </div>
 
@@ -226,10 +228,10 @@ export default function Review() {
               {loadingSubs ? (
                 <div className="flex items-center gap-2 text-sm text-ocean-150">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Carregando subsidiaries...
+                  {t('loadingSubsidiaries')}
                 </div>
               ) : existingSubsidiaries.length === 0 ? (
-                <p className="text-sm text-rose">Nenhuma subsidiary encontrada.</p>
+                <p className="text-sm text-rose">{t('noSubsidiaryFound')}</p>
               ) : (
                 <select
                   value={selectedSubsidiaryId}
@@ -253,13 +255,13 @@ export default function Review() {
         loadingLookup ? (
           <div className="flex items-center gap-2 text-sm text-ocean-150 bg-white rounded-lg border border-ocean-30 p-4">
             <Loader2 className="w-4 h-4 animate-spin" />
-            Carregando dados do NetSuite...
+            {t('loadingNetSuiteData')}
           </div>
         ) : (
           <>
             {lookupError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-rose">
-                <strong>Erro ao carregar listas:</strong> {lookupError}
+                <strong>{t('errorLoadingLists')}</strong> {lookupError}
               </div>
             )}
             <SubsidiaryBuilder
@@ -286,19 +288,19 @@ export default function Review() {
       >
         <ArrowRight className="w-4 h-4" />
         {mode === 'create'
-          ? (hasAccounts ? 'Criar Subsidiaries + Contas' : 'Criar Subsidiaries')
-          : 'Criar Contas no NetSuite'}
+          ? (hasAccounts ? t('createSubsidiariesAndAccounts') : t('createSubsidiaries'))
+          : t('createAccountsInNetSuite')}
       </button>
 
       {/* Modal de confirmacao pre-criacao */}
       {showConfirm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg border border-ocean-30 p-5 max-w-sm w-full mx-4 shadow-lg">
-            <h3 className="text-sm font-medium text-ocean-180 mb-3">Confirmar Importacao</h3>
+            <h3 className="text-sm font-medium text-ocean-180 mb-3">{t('confirmImport')}</h3>
 
             <div className="space-y-2 text-sm text-ocean-150 mb-4">
               <p className="font-medium text-ocean-180">
-                {mode === 'create' ? 'Criar nova subsidiary' : `Subsidiary existente (ID ${selectedSubsidiaryId})`}
+                {mode === 'create' ? t('createNewSubsidiary') : t('existingSubsidiary', { id: selectedSubsidiaryId })}
               </p>
 
               {hasAccounts && (
@@ -306,26 +308,26 @@ export default function Review() {
                   {confirmCounts.toCreate > 0 && (
                     <p className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-pine flex-shrink-0" />
-                      {confirmCounts.toCreate} conta{confirmCounts.toCreate !== 1 ? 's' : ''} a criar
+                      {t('accountsToCreate', { count: confirmCounts.toCreate })}
                     </p>
                   )}
                   {confirmCounts.toUpdate > 0 && (
                     <p className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-golden flex-shrink-0" />
-                      {confirmCounts.toUpdate} conta{confirmCounts.toUpdate !== 1 ? 's' : ''} a atualizar
+                      {t('accountsToUpdate', { count: confirmCounts.toUpdate })}
                     </p>
                   )}
                   {confirmCounts.toSkip > 0 && (
                     <p className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-ocean-60 flex-shrink-0" />
-                      {confirmCounts.toSkip} conta{confirmCounts.toSkip !== 1 ? 's' : ''} a pular
+                      {t('accountsToSkip', { count: confirmCounts.toSkip })}
                     </p>
                   )}
                 </div>
               )}
 
               {!hasAccounts && (
-                <p className="text-xs text-ocean-60">Modo subsidiary-only (sem plano de contas)</p>
+                <p className="text-xs text-ocean-60">{t('subsidiaryOnlyMode')}</p>
               )}
             </div>
 
@@ -334,13 +336,13 @@ export default function Review() {
                 onClick={() => setShowConfirm(false)}
                 className="flex-1 px-3 py-2 text-sm border border-ocean-30 rounded-md text-ocean-150 hover:bg-ocean-10"
               >
-                Voltar
+                {t('back')}
               </button>
               <button
                 onClick={handleConfirmCreate}
                 className="flex-1 px-3 py-2 text-sm bg-pine text-white rounded-md font-medium hover:bg-ocean-180"
               >
-                Confirmar
+                {t('confirm')}
               </button>
             </div>
           </div>

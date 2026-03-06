@@ -1,0 +1,22 @@
+{
+  "title": "Configuracion",
+  "backHome": "Inicio",
+  "netsuiteOAuth": "NetSuite OAuth 1.0",
+  "claudeApi": "Claude API",
+  "apiKey": "API Key",
+  "restletSection": "RESTlet (Opcional)",
+  "restletUrl": "URL del RESTlet",
+  "restletHint": "Necesario para crear subsidiaries.",
+  "requiredFields": "Campos obligatorios: {{fields}}",
+  "savedSuccess": "Credenciales guardadas con exito",
+  "savedLocally": "Credenciales guardadas localmente en este navegador.",
+  "saving": "Guardando...",
+  "saveAndContinue": "Guardar y Continuar",
+  "clear": "Limpiar",
+  "taxDiscovery": "Tax Discovery",
+  "taxDiscoveryHint": "Consulta registros fiscales configurados en NetSuite.",
+  "general": "General",
+  "fteContent": "FTE (Contenido)",
+  "summary": "Resumen:",
+  "viewFullJson": "Ver JSON completo"
+}

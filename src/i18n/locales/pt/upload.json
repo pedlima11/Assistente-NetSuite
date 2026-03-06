@@ -1,0 +1,13 @@
+{
+  "importLabels": {
+    "plano-de-contas": "Plano de Contas",
+    "dre": "DRE",
+    "balanco": "Balanco Patrimonial"
+  },
+  "defaultTitle": "Upload de Arquivo",
+  "backHome": "Inicio",
+  "parsing": "Extraindo dados do Excel...",
+  "structuring": "Estruturando dados com Claude AI...",
+  "processing": "Processando...",
+  "processFile": "Processar Arquivo"
+}

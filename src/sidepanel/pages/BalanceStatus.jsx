@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle, XCircle, Loader2, ArrowLeft, Trash2 } from 'lucide-react';
 import { setOpeningBalances } from '../../services/journal-entry-creator.js';
 
 export default function BalanceStatus() {
   const navigate = useNavigate();
+  const { t } = useTranslation('balance');
   const [phase, setPhase] = useState('idle'); // idle | updating | done
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
@@ -71,7 +73,7 @@ export default function BalanceStatus() {
     <div className="max-w-3xl space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-medium text-ocean-180">
-          {phase === 'done' ? 'Resultado' : 'Definindo Saldos Iniciais'}
+          {phase === 'done' ? t('result') : t('settingBalances')}
         </h2>
         {phase === 'done' && (
           <div className="flex gap-2">
@@ -80,14 +82,14 @@ export default function BalanceStatus() {
               className="text-sm text-ocean-150 hover:text-ocean-180 flex items-center gap-1"
             >
               <Trash2 className="w-3 h-3" />
-              Limpar
+              {t('clear')}
             </button>
             <button
               onClick={() => navigate('/')}
               className="text-sm text-ocean-150 hover:text-ocean-180 flex items-center gap-1"
             >
               <ArrowLeft className="w-3 h-3" />
-              Inicio
+              {t('home')}
             </button>
           </div>
         )}
@@ -109,7 +111,7 @@ export default function BalanceStatus() {
           )}
           <div className="flex-1">
             <p className="text-sm font-medium text-ocean-180">
-              Saldos Iniciais ({progress.current}/{progress.total})
+              {t('openingBalances')} ({progress.current}/{progress.total})
             </p>
             {currentAccount && phase === 'updating' && (
               <p className="text-xs text-ocean-60 truncate">{currentAccount}</p>
@@ -130,7 +132,7 @@ export default function BalanceStatus() {
       {result && result.errors.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3">
           <h4 className="text-sm font-medium text-rose mb-2">
-            Erros ({result.errors.length})
+            {t('errors')} ({result.errors.length})
           </h4>
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {result.errors.map((err, i) => (
@@ -151,7 +153,7 @@ export default function BalanceStatus() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-3">
           <div className="flex items-center gap-2 mb-1">
             <XCircle className="w-4 h-4 text-rose" />
-            <span className="text-sm font-medium text-rose">Erro</span>
+            <span className="text-sm font-medium text-rose">{t('error')}</span>
           </div>
           <p className="text-sm text-rose">{error}</p>
         </div>
@@ -161,9 +163,9 @@ export default function BalanceStatus() {
       {phase === 'done' && !error && result && result.errors.length === 0 && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
           <CheckCircle className="w-8 h-8 text-pine mx-auto mb-2" />
-          <p className="text-sm font-medium text-pine">Saldos iniciais definidos com sucesso!</p>
+          <p className="text-sm font-medium text-pine">{t('successMessage')}</p>
           <p className="text-xs text-pine mt-1">
-            Journal Entry criado com {result.updated} linhas
+            {t('journalEntryCreated', { count: result.updated })}
             {result.journalEntryId && ` (ID: ${result.journalEntryId})`}
           </p>
         </div>
@@ -173,7 +175,7 @@ export default function BalanceStatus() {
       {debugLog.length > 0 && (
         <details className="bg-neutral border border-ocean-30 rounded-lg p-3">
           <summary className="text-xs text-ocean-150 cursor-pointer">
-            Log de debug ({debugLog.length})
+            {t('debugLog')} ({debugLog.length})
           </summary>
           <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
             {debugLog.map((log, i) => (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft, Loader2, Download, Package,
   Trash2, AlertTriangle, CheckCircle, AlertCircle, Upload,
@@ -19,13 +20,14 @@ function StepUpload({
   file, setFile, config, setConfig, onProcess, processing,
   subsidiaries, subsLoading, lookupLoading, lookupError,
 }) {
+  const { t } = useTranslation('item');
   const [dragOver, setDragOver] = useState(false);
   const [fileError, setFileError] = useState('');
 
   function validateFile(f) {
     const ext = '.' + f.name.split('.').pop().toLowerCase();
-    if (!ACCEPTED_EXTENSIONS.includes(ext)) return 'Formato invalido. Use .csv, .xls ou .xlsx';
-    if (f.size > 50 * 1024 * 1024) return 'Arquivo excede 50MB';
+    if (!ACCEPTED_EXTENSIONS.includes(ext)) return t('upload.invalidFormat');
+    if (f.size > 50 * 1024 * 1024) return t('upload.fileTooLarge');
     return null;
   }
 
@@ -59,9 +61,9 @@ function StepUpload({
       >
         <Upload className="w-8 h-8 mx-auto mb-2 text-ocean-60" />
         <p className="text-sm text-ocean-150 font-medium">
-          {file ? file.name : 'Arraste ou clique para selecionar'}
+          {file ? file.name : t('upload.dragOrSelect')}
         </p>
-        <p className="text-xs text-ocean-60 mt-1">.csv, .xls, .xlsx</p>
+        <p className="text-xs text-ocean-60 mt-1">{t('upload.fileTypes')}</p>
         <input
           id="item-file-input"
           type="file"
@@ -74,14 +76,14 @@ function StepUpload({
 
       {/* Subsidiaria */}
       <div>
-        <label className="block text-sm text-ocean-150 mb-1 font-medium">Subsidiaria *</label>
+        <label className="block text-sm text-ocean-150 mb-1 font-medium">{t('upload.subsidiaryLabel')}</label>
         <select
           value={config.subsidiaryId}
           onChange={(e) => setConfig((c) => ({ ...c, subsidiaryId: e.target.value }))}
           disabled={subsLoading}
           className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-ocean-120"
         >
-          <option value="">{subsLoading ? 'Carregando...' : 'Selecione'}</option>
+          <option value="">{subsLoading ? t('upload.loadingPlaceholder') : t('upload.selectPlaceholder')}</option>
           {subsidiaries.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
@@ -90,7 +92,7 @@ function StepUpload({
 
       {lookupLoading && (
         <div className="flex items-center gap-2 text-xs text-ocean-60">
-          <Loader2 className="w-3 h-3 animate-spin" /> Carregando dados do NetSuite...
+          <Loader2 className="w-3 h-3 animate-spin" /> {t('upload.loadingNetsuite')}
         </div>
       )}
       {lookupError && (
@@ -99,15 +101,15 @@ function StepUpload({
 
       {/* Tipo de item */}
       <div>
-        <label className="block text-sm text-ocean-150 mb-1 font-medium">Tipo de Item *</label>
+        <label className="block text-sm text-ocean-150 mb-1 font-medium">{t('upload.itemTypeLabel')}</label>
         <select
           value={config.itemType}
           onChange={(e) => setConfig((c) => ({ ...c, itemType: e.target.value }))}
           className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-ocean-120"
         >
-          <option value="">Selecione</option>
-          {ITEM_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
+          <option value="">{t('upload.selectPlaceholder')}</option>
+          {ITEM_TYPES.map((type) => (
+            <option key={type.value} value={type.value}>{type.label}</option>
           ))}
         </select>
       </div>
@@ -119,9 +121,9 @@ function StepUpload({
         className="w-full py-2 bg-ocean-120 text-white text-sm font-medium rounded-md hover:bg-ocean-150 disabled:opacity-50 flex items-center justify-center gap-2"
       >
         {processing ? (
-          <><Loader2 className="w-4 h-4 animate-spin" /> Processando...</>
+          <><Loader2 className="w-4 h-4 animate-spin" /> {t('upload.processing')}</>
         ) : (
-          'Processar Arquivo'
+          t('upload.processFile')
         )}
       </button>
     </div>
@@ -136,6 +138,7 @@ function StepReview({
   costingMethods, efdNatureIncomes,
   onBack, onImport,
 }) {
+  const { t } = useTranslation('item');
   const applicable = getApplicableFields(config.itemType);
   const withErrors = items.filter((it) =>
     it._errors.length > 0 || (it._accountErrors && it._accountErrors.length > 0)
@@ -165,21 +168,21 @@ function StepReview({
     }));
   }
 
-  const selectedType = ITEM_TYPES.find((t) => t.value === config.itemType);
+  const selectedType = ITEM_TYPES.find((tp) => tp.value === config.itemType);
 
   return (
     <div className="space-y-3">
       {/* Resumo */}
       <div className="bg-ocean-10 rounded-lg p-3 text-xs text-ocean-150 space-y-1">
-        <p><strong>Tipo:</strong> {selectedType?.label || config.itemType}</p>
-        <p><strong>Subsidiaria:</strong> {config.subsidiaryId}</p>
+        <p><strong>{t('review.type')}:</strong> {selectedType?.label || config.itemType}</p>
+        <p><strong>{t('review.subsidiary')}:</strong> {config.subsidiaryId}</p>
       </div>
 
       {/* Contas nao carregaram */}
       {accounts.length === 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3">
           <div className="flex items-center gap-1 text-rose text-xs font-medium">
-            <AlertCircle className="w-3.5 h-3.5" /> Contas contabeis nao carregaram do NetSuite
+            <AlertCircle className="w-3.5 h-3.5" /> {t('review.accountsNotLoaded')}
           </div>
         </div>
       )}
@@ -187,18 +190,18 @@ function StepReview({
       {/* Valores padrao — contas + custeio */}
       <div className="bg-white rounded-lg border border-ocean-30 p-4 space-y-3">
         <h3 className="text-sm font-medium text-ocean-150 uppercase tracking-wide">
-          Valores padrao
+          {t('review.defaults')}
         </h3>
 
         {applicable.incomeAccount && (
           <div>
-            <label className="block text-xs text-ocean-150 mb-1">Conta de Receita *</label>
+            <label className="block text-xs text-ocean-150 mb-1">{t('review.incomeAccount')}</label>
             <select
               value={fallbackConfig.incomeAccountId}
               onChange={(e) => setFallbackConfig((c) => ({ ...c, incomeAccountId: e.target.value }))}
               className="w-full px-2 py-1.5 border border-ocean-30 rounded text-xs focus:outline-none focus:ring-1 focus:ring-ocean-120"
             >
-              <option value="">Selecione</option>
+              <option value="">{t('upload.selectPlaceholder')}</option>
               {(() => {
                 const filtered = accounts.filter((a) => a.acctType === 'Income' || a.acctType === 'OthIncome');
                 return (filtered.length > 0 ? filtered : accounts).map((a) => (
@@ -211,13 +214,13 @@ function StepReview({
 
         {applicable.assetAccount && (
           <div>
-            <label className="block text-xs text-ocean-150 mb-1">Conta de Ativo *</label>
+            <label className="block text-xs text-ocean-150 mb-1">{t('review.assetAccount')}</label>
             <select
               value={fallbackConfig.assetAccountId}
               onChange={(e) => setFallbackConfig((c) => ({ ...c, assetAccountId: e.target.value }))}
               className="w-full px-2 py-1.5 border border-ocean-30 rounded text-xs focus:outline-none focus:ring-1 focus:ring-ocean-120"
             >
-              <option value="">Selecione</option>
+              <option value="">{t('upload.selectPlaceholder')}</option>
               {(() => {
                 const filtered = accounts.filter((a) => ['OthCurrAsset', 'OthAsset', 'FixedAsset'].includes(a.acctType));
                 return (filtered.length > 0 ? filtered : accounts).map((a) => (
@@ -230,13 +233,13 @@ function StepReview({
 
         {applicable.cogsAccount && (
           <div>
-            <label className="block text-xs text-ocean-150 mb-1">Conta CMV *</label>
+            <label className="block text-xs text-ocean-150 mb-1">{t('review.cogsAccount')}</label>
             <select
               value={fallbackConfig.cogsAccountId}
               onChange={(e) => setFallbackConfig((c) => ({ ...c, cogsAccountId: e.target.value }))}
               className="w-full px-2 py-1.5 border border-ocean-30 rounded text-xs focus:outline-none focus:ring-1 focus:ring-ocean-120"
             >
-              <option value="">Selecione</option>
+              <option value="">{t('upload.selectPlaceholder')}</option>
               {(() => {
                 const filtered = accounts.filter((a) => a.acctType === 'COGS');
                 return (filtered.length > 0 ? filtered : accounts).map((a) => (
@@ -249,13 +252,13 @@ function StepReview({
 
         {applicable.expenseAccount && (
           <div>
-            <label className="block text-xs text-ocean-150 mb-1">Conta de Despesa *</label>
+            <label className="block text-xs text-ocean-150 mb-1">{t('review.expenseAccount')}</label>
             <select
               value={fallbackConfig.expenseAccountId}
               onChange={(e) => setFallbackConfig((c) => ({ ...c, expenseAccountId: e.target.value }))}
               className="w-full px-2 py-1.5 border border-ocean-30 rounded text-xs focus:outline-none focus:ring-1 focus:ring-ocean-120"
             >
-              <option value="">Selecione</option>
+              <option value="">{t('upload.selectPlaceholder')}</option>
               {(() => {
                 const filtered = accounts.filter((a) => a.acctType === 'Expense');
                 return (filtered.length > 0 ? filtered : accounts).map((a) => (
@@ -268,13 +271,13 @@ function StepReview({
 
         {applicable.costingMethod && (
           <div>
-            <label className="block text-xs text-ocean-150 mb-1">Metodo de Custeio</label>
+            <label className="block text-xs text-ocean-150 mb-1">{t('review.costingMethod')}</label>
             <select
               value={fallbackConfig.costingMethod}
               onChange={(e) => setFallbackConfig((c) => ({ ...c, costingMethod: e.target.value }))}
               className="w-full px-2 py-1.5 border border-ocean-30 rounded text-xs focus:outline-none focus:ring-1 focus:ring-ocean-120"
             >
-              <option value="">Selecione</option>
+              <option value="">{t('upload.selectPlaceholder')}</option>
               {(costingMethods.length > 0
                 ? costingMethods.map((m) => ({ value: m.id, label: m.name }))
                 : FALLBACK_COSTING_METHODS
@@ -287,13 +290,13 @@ function StepReview({
 
         {applicable.reinf && efdNatureIncomes.length > 0 && (
           <div>
-            <label className="block text-xs text-ocean-150 mb-1">Natureza do Rendimento (REINF)</label>
+            <label className="block text-xs text-ocean-150 mb-1">{t('review.reinfNature')}</label>
             <select
               value={fallbackConfig.efdNatureIncomeId}
               onChange={(e) => setFallbackConfig((c) => ({ ...c, efdNatureIncomeId: e.target.value }))}
               className="w-full px-2 py-1.5 border border-ocean-30 rounded text-xs focus:outline-none focus:ring-1 focus:ring-ocean-120"
             >
-              <option value="">Selecione</option>
+              <option value="">{t('upload.selectPlaceholder')}</option>
               {efdNatureIncomes.map((n) => (
                 <option key={n.id} value={n.id}>{n.name}</option>
               ))}
@@ -305,10 +308,10 @@ function StepReview({
 
       {/* Stats */}
       <div className="bg-white rounded-lg border border-ocean-30 p-3 flex items-center justify-between text-xs">
-        <span className="text-ocean-150"><strong>{items.length}</strong> itens</span>
+        <span className="text-ocean-150"><strong>{items.length}</strong> {t('review.items')}</span>
         {withErrors > 0 && (
           <span className="text-rose flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" /> {withErrors} com pendencias
+            <AlertTriangle className="w-3 h-3" /> {withErrors} {t('review.withIssues')}
           </span>
         )}
       </div>
@@ -337,7 +340,7 @@ function StepReview({
 
               {/* itemId */}
               <div>
-                <label className="block text-ocean-60 mb-0.5">Nome do Item *</label>
+                <label className="block text-ocean-60 mb-0.5">{t('review.itemName')}</label>
                 <input
                   value={item.itemId || ''}
                   onChange={(e) => handleEdit(idx, 'itemId', e.target.value)}
@@ -349,29 +352,29 @@ function StepReview({
 
               {/* displayName */}
               <div className="mt-1.5">
-                <label className="block text-ocean-60 mb-0.5">Nome de Exibicao</label>
+                <label className="block text-ocean-60 mb-0.5">{t('review.displayName')}</label>
                 <input
                   value={item.displayName || ''}
                   onChange={(e) => handleEdit(idx, 'displayName', e.target.value)}
                   maxLength={200}
-                  placeholder="Nome de exibicao (pode repetir)"
+                  placeholder={t('review.displayNamePlaceholder')}
                   className="w-full px-2 py-1 border border-ocean-30 rounded text-xs focus:outline-none focus:ring-1 focus:ring-ocean-120"
                 />
               </div>
 
               {/* Campos fiscais por item */}
               <div className="mt-2 pt-2 border-t border-ocean-20 space-y-1.5">
-                <p className="text-xs text-ocean-60 font-medium">Dados Fiscais</p>
+                <p className="text-xs text-ocean-60 font-medium">{t('review.taxData')}</p>
 
                 {/* NCM */}
                 <div>
-                  <label className="block text-ocean-60 mb-0.5 text-xs">NCM</label>
+                  <label className="block text-ocean-60 mb-0.5 text-xs">{t('review.ncm')}</label>
                   <select
                     value={item.ncmCodeId || ''}
                     onChange={(e) => handleEdit(idx, 'ncmCodeId', e.target.value)}
                     className="w-full px-2 py-1 border border-ocean-30 rounded text-xs focus:outline-none focus:ring-1 focus:ring-ocean-120"
                   >
-                    <option value="">{item.ncmCode || 'Selecione NCM'}</option>
+                    <option value="">{item.ncmCode || t('review.selectNcm')}</option>
                     {ncmCodes.map((n) => (
                       <option key={n.id} value={n.id}>{n.name}</option>
                     ))}
@@ -403,7 +406,7 @@ function StepReview({
                         item.cestCode && item._cestCode_valid === false ? 'border-red-300 bg-red-50' : 'border-ocean-30'
                       }`}
                     >
-                      <option value="">{item.cestCode || 'Selecione CEST'}</option>
+                      <option value="">{item.cestCode || t('review.selectCest')}</option>
                       {cestCodes.map((c) => (
                         <option key={c.id} value={c.id}>{c.name}</option>
                       ))}
@@ -413,13 +416,13 @@ function StepReview({
 
                 {/* Origem */}
                 <div>
-                  <label className="block text-ocean-60 mb-0.5 text-xs">Origem</label>
+                  <label className="block text-ocean-60 mb-0.5 text-xs">{t('review.origin')}</label>
                   <select
                     value={item.itemOriginId || ''}
                     onChange={(e) => handleEdit(idx, 'itemOriginId', e.target.value)}
                     className="w-full px-2 py-1 border border-ocean-30 rounded text-xs focus:outline-none focus:ring-1 focus:ring-ocean-120"
                   >
-                    <option value="">Selecione Origem</option>
+                    <option value="">{t('review.selectOrigin')}</option>
                     {itemOrigins.map((o) => (
                       <option key={o.id} value={o.id}>{o.name}</option>
                     ))}
@@ -428,13 +431,13 @@ function StepReview({
 
                 {/* Tributacao IPI */}
                 <div>
-                  <label className="block text-ocean-60 mb-0.5 text-xs">Tributacao IPI</label>
+                  <label className="block text-ocean-60 mb-0.5 text-xs">{t('review.ipiTaxation')}</label>
                   <select
                     value={item.ipiFramingCodeId || ''}
                     onChange={(e) => handleEdit(idx, 'ipiFramingCodeId', e.target.value)}
                     className="w-full px-2 py-1 border border-ocean-30 rounded text-xs focus:outline-none focus:ring-1 focus:ring-ocean-120"
                   >
-                    <option value="">{item.ipiFramingCode || 'Selecione IPI'}</option>
+                    <option value="">{item.ipiFramingCode || t('review.selectIpi')}</option>
                     {ipiFramingCodes.map((f) => (
                       <option key={f.id} value={f.id}>{f.name}</option>
                     ))}
@@ -444,7 +447,7 @@ function StepReview({
                 {/* Tipo SPED EFD */}
                 <div>
                   <label className="text-ocean-60 mb-0.5 text-xs flex items-center gap-1">
-                    Tipo SPED EFD
+                    {t('review.spedEfdType')}
                     {item.spedEfdType && (
                       item._spedEfdType_valid ? <CheckCircle className="w-3 h-3 text-green-500" /> : <AlertCircle className="w-3 h-3 text-rose" />
                     )}
@@ -466,7 +469,7 @@ function StepReview({
                         item.spedEfdType && item._spedEfdType_valid === false ? 'border-red-300 bg-red-50' : 'border-ocean-30'
                       }`}
                     >
-                      <option value="">{item.spedEfdType || 'Selecione Tipo SPED'}</option>
+                      <option value="">{item.spedEfdType || t('review.selectSped')}</option>
                       {spedEfdTypes.map((s) => (
                         <option key={s.id} value={s.id}>{s.name}</option>
                       ))}
@@ -478,7 +481,7 @@ function StepReview({
               {/* costingMethod per-item */}
               {applicable.costingMethod && item.costingMethod && (
                 <div className="mt-1.5">
-                  <label className="block text-ocean-60 mb-0.5">Custeio</label>
+                  <label className="block text-ocean-60 mb-0.5">{t('review.costing')}</label>
                   <select
                     value={item.costingMethod || ''}
                     onChange={(e) => handleEdit(idx, 'costingMethod', e.target.value)}
@@ -497,13 +500,13 @@ function StepReview({
               {/* REINF per-item */}
               {applicable.reinf && efdNatureIncomes.length > 0 && (
                 <div className="mt-1.5">
-                  <label className="block text-ocean-60 mb-0.5">Nat. Rendimento (REINF)</label>
+                  <label className="block text-ocean-60 mb-0.5">{t('review.reinfPerItem')}</label>
                   <select
                     value={item.efdNatureIncomeId || ''}
                     onChange={(e) => handleEdit(idx, 'efdNatureIncomeId', e.target.value)}
                     className="w-full px-2 py-1 border border-ocean-30 rounded text-xs focus:outline-none focus:ring-1 focus:ring-ocean-120"
                   >
-                    <option value="">Selecione</option>
+                    <option value="">{t('upload.selectPlaceholder')}</option>
                     {efdNatureIncomes.map((n) => (
                       <option key={n.id} value={n.id}>{n.name}</option>
                     ))}
@@ -525,15 +528,15 @@ function StepReview({
                 const display = item['_' + field + '_display'] || item[field];
                 const idField = field.replace('Name', 'Id');
                 const labelMap = {
-                  incomeAccountName: 'Receita',
-                  assetAccountName: 'Ativo',
-                  cogsAccountName: 'CMV',
-                  expenseAccountName: 'Despesa',
+                  incomeAccountName: t('review.accountIncome'),
+                  assetAccountName: t('review.accountAsset'),
+                  cogsAccountName: t('review.accountCogs'),
+                  expenseAccountName: t('review.accountExpense'),
                 };
                 return (
                   <div key={field} className="mt-1.5">
                     <label className="text-ocean-60 mb-0.5 flex items-center gap-1 text-xs">
-                      Conta {labelMap[field]}
+                      {labelMap[field]}
                       {isValid ? (
                         <CheckCircle className="w-3 h-3 text-green-500" />
                       ) : (
@@ -548,14 +551,14 @@ function StepReview({
                         onChange={(e) => handleAccountOverride(idx, idField, e.target.value)}
                         className="w-full px-2 py-1 border border-red-300 rounded text-xs bg-red-50 focus:outline-none focus:ring-1 focus:ring-ocean-120"
                       >
-                        <option value="">Selecione conta ({item[field]})</option>
+                        <option value="">{t('review.selectAccount', { name: item[field] })}</option>
                         {accounts.map((a) => (
                           <option key={a.id} value={a.id}>{a.acctNumber} - {a.acctName}</option>
                         ))}
                       </select>
                     ) : (
                       <p className="text-xs text-rose bg-red-50 px-2 py-1 rounded">
-                        "{item[field]}" — contas nao carregaram
+                        {t('review.accountsNotLoadedInline', { name: item[field] })}
                       </p>
                     )}
                   </div>
@@ -579,14 +582,14 @@ function StepReview({
           onClick={onBack}
           className="flex-1 py-2 border border-ocean-30 text-ocean-150 text-sm rounded-md hover:bg-ocean-10 flex items-center justify-center gap-1"
         >
-          Voltar
+          {t('review.back')}
         </button>
         <button
           onClick={onImport}
           disabled={items.length === 0}
           className="flex-1 py-2 bg-ocean-120 text-white text-sm font-medium rounded-md hover:bg-ocean-150 disabled:opacity-50 flex items-center justify-center gap-1"
         >
-          Importar
+          {t('review.import')}
         </button>
       </div>
     </div>
@@ -596,10 +599,11 @@ function StepReview({
 // ── Etapa 3: Importacao ──────────────────────────────────────────────────────
 
 function StepImport({ items, config, fallbackConfig, onBack }) {
+  const { t } = useTranslation('item');
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState(null);
 
-  const selectedType = ITEM_TYPES.find((t) => t.value === config.itemType);
+  const selectedType = ITEM_TYPES.find((tp) => tp.value === config.itemType);
 
   async function handleImport() {
     setImporting(true);
@@ -657,7 +661,7 @@ function StepImport({ items, config, fallbackConfig, onBack }) {
       });
       setResult(res);
     } catch (err) {
-      setResult({ success: false, itemsCreated: 0, errors: [{ name: 'Erro geral', error: err.message }] });
+      setResult({ success: false, itemsCreated: 0, errors: [{ name: t('import.generalError'), error: err.message }] });
     } finally {
       setImporting(false);
     }
@@ -682,15 +686,15 @@ function StepImport({ items, config, fallbackConfig, onBack }) {
     <div className="space-y-4">
       {/* Resumo */}
       <div className="bg-white rounded-lg border border-ocean-30 p-4">
-        <h3 className="text-sm font-medium text-ocean-150 mb-3">Resumo da Importacao</h3>
+        <h3 className="text-sm font-medium text-ocean-150 mb-3">{t('import.summary')}</h3>
         <div className="grid grid-cols-2 gap-3 text-center">
           <div className="bg-ocean-10 rounded-lg p-3">
             <p className="text-lg font-bold text-ocean-180">{items.length}</p>
-            <p className="text-xs text-ocean-60">Total Itens</p>
+            <p className="text-xs text-ocean-60">{t('import.totalItems')}</p>
           </div>
           <div className="bg-ocean-10 rounded-lg p-3">
             <p className="text-xs font-bold text-ocean-150">{selectedType?.label || config.itemType}</p>
-            <p className="text-xs text-ocean-60">Tipo</p>
+            <p className="text-xs text-ocean-60">{t('import.type')}</p>
           </div>
         </div>
       </div>
@@ -705,12 +709,12 @@ function StepImport({ items, config, fallbackConfig, onBack }) {
               <AlertCircle className="w-5 h-5 text-rose" />
             )}
             <span className={`text-sm font-medium ${result.success ? 'text-pine' : 'text-rose'}`}>
-              {result.itemsCreated || 0} itens criados
-              {result.errors?.length > 0 && ` | ${result.errors.length} erros`}
+              {result.itemsCreated || 0} {t('import.itemsCreated')}
+              {result.errors?.length > 0 && ` | ${result.errors.length} ${t('import.errors')}`}
             </span>
           </div>
           <p className="text-xs text-gray-400 mb-1">
-            Script: {result.scriptVersion || 'SEM VERSAO - RESTlet desatualizado!'}
+            {result.scriptVersion ? t('import.scriptVersion', { version: result.scriptVersion }) : t('import.noScriptVersion')}
           </p>
 
           {result.created?.length > 0 && (
@@ -734,7 +738,7 @@ function StepImport({ items, config, fallbackConfig, onBack }) {
                 </div>
               ))}
               {result.errors.length > 15 && (
-                <p className="text-xs text-rose">...e mais {result.errors.length - 15} erros</p>
+                <p className="text-xs text-rose">{t('import.andMore', { count: result.errors.length - 15 })}</p>
               )}
             </div>
           )}
@@ -750,9 +754,9 @@ function StepImport({ items, config, fallbackConfig, onBack }) {
             className="w-full py-2 bg-pine text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {importing ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Importando...</>
+              <><Loader2 className="w-4 h-4 animate-spin" /> {t('import.importing')}</>
             ) : (
-              <><Upload className="w-4 h-4" /> Importar para NetSuite</>
+              <><Upload className="w-4 h-4" /> {t('import.importToNetsuite')}</>
             )}
           </button>
         )}
@@ -760,10 +764,10 @@ function StepImport({ items, config, fallbackConfig, onBack }) {
           onClick={handleExportCSV}
           className="w-full py-2 border border-ocean-30 text-ocean-150 text-sm rounded-md hover:bg-ocean-10 flex items-center justify-center gap-2"
         >
-          <Download className="w-4 h-4" /> Exportar CSV
+          <Download className="w-4 h-4" /> {t('import.exportCsv')}
         </button>
         <button onClick={onBack} className="w-full py-2 text-ocean-60 text-sm hover:text-ocean-150">
-          Voltar
+          {t('import.back')}
         </button>
       </div>
     </div>
@@ -774,6 +778,7 @@ function StepImport({ items, config, fallbackConfig, onBack }) {
 
 export default function ItemImport() {
   const navigate = useNavigate();
+  const { t } = useTranslation('item');
   const [step, setStep] = useState('upload');
 
   const [subsidiaries, setSubsidiaries] = useState([]);
@@ -841,7 +846,7 @@ export default function ItemImport() {
             setEfdNatureIncomes([]);
           }
           if ((data.accounts || []).length === 0) {
-            setLookupError('Contas contabeis nao retornaram do NetSuite.');
+            setLookupError(t('review.accountsNotLoaded'));
           }
           // Auto-preencher contas sugeridas da subsidiary
           if (data.suggestedAccounts && Object.keys(data.suggestedAccounts).length > 0) {
@@ -1020,13 +1025,13 @@ export default function ItemImport() {
       setItems(mapped);
       setStep('review');
     } catch (err) {
-      alert('Erro ao processar arquivo: ' + err.message);
+      alert(t('import.errorProcessing', { message: err.message }));
     } finally {
       setProcessing(false);
     }
   }
 
-  const stepLabels = { upload: '1. Upload', review: '2. Revisao', import: '3. Importar' };
+  const stepLabels = { upload: t('steps.upload'), review: t('steps.review'), import: t('steps.import') };
 
   return (
     <div className="space-y-4">
@@ -1034,13 +1039,13 @@ export default function ItemImport() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Package className="w-5 h-5 text-ocean-150" />
-          <h2 className="text-base font-medium text-ocean-180">Importar Itens</h2>
+          <h2 className="text-base font-medium text-ocean-180">{t('title')}</h2>
         </div>
         <button
           onClick={() => navigate('/')}
           className="text-sm text-ocean-150 hover:text-ocean-180 flex items-center gap-1"
         >
-          <ArrowLeft className="w-3 h-3" /> Inicio
+          <ArrowLeft className="w-3 h-3" /> {t('home')}
         </button>
       </div>
 

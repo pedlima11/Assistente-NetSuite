@@ -1,0 +1,50 @@
+{
+  "title": "Importar Clientes",
+  "home": "Inicio",
+  "steps": {
+    "upload": "1. Upload",
+    "review": "2. Revisao",
+    "import": "3. Importar"
+  },
+  "upload": {
+    "dragOrSelect": "Arraste um arquivo CSV ou Excel",
+    "remove": "Remover",
+    "invalidFormat": "Formato invalido. Use .csv, .xls ou .xlsx",
+    "fileTooLarge": "Arquivo excede 50MB",
+    "config": "Configuracao",
+    "subsidiary": "Subsidiaria",
+    "loadingSubsidiaries": "Carregando subsidiarias...",
+    "selectSubsidiary": "Selecione uma subsidiaria",
+    "subsidiaryPlaceholder": "Nome da subsidiaria no NetSuite",
+    "customerStatus": "Status do Cliente",
+    "selectStatus": "Selecione um status",
+    "processFile": "Processar Arquivo",
+    "processing": "Processando..."
+  },
+  "review": {
+    "customers": "clientes",
+    "pj": "PJ",
+    "pf": "PF",
+    "withErrors": "com erro",
+    "companyName": "Razao Social",
+    "document": "CNPJ/CPF",
+    "email": "Email",
+    "phone": "Telefone",
+    "back": "Voltar",
+    "import": "Importar"
+  },
+  "import": {
+    "summary": "Resumo da Importacao",
+    "total": "Total",
+    "customersCreated": "clientes criados",
+    "errors": "erros",
+    "importing": "Importando...",
+    "importToNetsuite": "Importar para NetSuite",
+    "exportCsv": "Exportar CSV",
+    "back": "Voltar",
+    "line": "Linha",
+    "generalError": "Erro geral",
+    "andMore": "...e mais {{count}} erros",
+    "errorProcessing": "Erro ao processar arquivo: {{message}}"
+  }
+}

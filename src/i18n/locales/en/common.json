@@ -1,0 +1,22 @@
+{
+  "setupAssistant": "Setup Assistant",
+  "assistantTitle": "Setup Assistant",
+  "nav": {
+    "home": "Home",
+    "settings": "Settings",
+    "chartOfAccounts": "Chart of Accounts",
+    "dre": "DRE",
+    "balance": "Balance Sheet",
+    "openingBalances": "Opening Balances",
+    "taxRules": "Tax Rules",
+    "customers": "Customers",
+    "vendors": "Vendors",
+    "items": "Items"
+  },
+  "language": {
+    "label": "Language",
+    "pt": "PT",
+    "en": "EN",
+    "es": "ES"
+  }
+}

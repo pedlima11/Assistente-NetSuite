@@ -1,21 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import FileUploader from '../components/FileUploader.jsx';
 import { parseExcelFile } from '../../parsers/excel-parser.js';
 import { structureFinancialData } from '../../services/claude-parser.js';
 
-const IMPORT_LABELS = {
-  'plano-de-contas': 'Plano de Contas',
-  'dre': 'DRE',
-  'balanco': 'Balanco Patrimonial',
-};
-
 export default function Upload() {
+  const { t } = useTranslation('upload');
   const navigate = useNavigate();
   const location = useLocation();
   const importType = location.state?.importType || 'balanco';
-  const pageTitle = IMPORT_LABELS[importType] || 'Upload de Arquivo';
+  const pageTitle = t(`importLabels.${importType}`, t('defaultTitle'));
 
   const [file, setFile] = useState(null);
   const [processing, setProcessing] = useState(false);
@@ -57,7 +53,7 @@ export default function Upload() {
           className="text-sm text-ocean-150 hover:text-ocean-180 flex items-center gap-1"
         >
           <ArrowLeft className="w-3 h-3" />
-          Inicio
+          {t('backHome')}
         </button>
       </div>
 
@@ -66,8 +62,8 @@ export default function Upload() {
       {processing && (
         <div className="flex items-center gap-2 text-sm text-ocean-120">
           <Loader2 className="w-4 h-4 animate-spin" />
-          {step === 'parsing' && 'Extraindo dados do Excel...'}
-          {step === 'structuring' && 'Estruturando dados com Claude AI...'}
+          {step === 'parsing' && t('parsing')}
+          {step === 'structuring' && t('structuring')}
         </div>
       )}
 
@@ -87,7 +83,7 @@ export default function Upload() {
         ) : (
           <ArrowRight className="w-4 h-4" />
         )}
-        {processing ? 'Processando...' : 'Processar Arquivo'}
+        {processing ? t('processing') : t('processFile')}
       </button>
     </div>
   );

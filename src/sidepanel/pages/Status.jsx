@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle, XCircle, Loader2, RotateCcw, ArrowLeft, Trash2, Building2 } from 'lucide-react';
 import { sendToBackground } from '../../utils/api-client.js';
 import { ProgressStore, computeImportKey } from '../../utils/progress-store.js';
@@ -7,6 +8,7 @@ import { ChartOfAccountsMapper } from '../../services/coa-mapper.js';
 import { MessageType } from '../../types/messages.js';
 
 export default function Status() {
+  const { t } = useTranslation('status');
   const navigate = useNavigate();
   const [phase, setPhase] = useState('idle');
   const [subsidiaryResults, setSubsidiaryResults] = useState([]); // [{name, status, internalId, error}]
@@ -55,7 +57,7 @@ export default function Status() {
 
     // Initialize results display
     setSubsidiaryResults(sorted.map((n) => ({
-      name: n.name || 'Sem nome',
+      name: n.name || t('noName'),
       status: 'pending',
       internalId: null,
       error: null,
@@ -368,7 +370,7 @@ export default function Status() {
     <div className="max-w-3xl space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-medium text-ocean-180">
-          {phase === 'done' ? 'Resultado' : 'Criando no NetSuite'}
+          {phase === 'done' ? t('result') : t('creatingInNetSuite')}
         </h2>
         <div className="flex gap-2">
           {phase === 'done' && (
@@ -378,14 +380,14 @@ export default function Status() {
                 className="text-sm text-ocean-150 hover:text-ocean-180 flex items-center gap-1"
               >
                 <Trash2 className="w-3 h-3" />
-                Limpar
+                {t('clear')}
               </button>
               <button
                 onClick={() => navigate(accountsProgress.total > 0 ? '/upload' : '/')}
                 className="text-sm text-ocean-150 hover:text-ocean-180 flex items-center gap-1"
               >
                 <ArrowLeft className="w-3 h-3" />
-                {accountsProgress.total > 0 ? 'Nova Importacao' : 'Voltar ao Inicio'}
+                {accountsProgress.total > 0 ? t('newImport') : t('backHome')}
               </button>
             </>
           )}
@@ -394,7 +396,7 @@ export default function Status() {
 
       {resuming && (
         <div className="bg-ocean-10 border border-ocean-30 rounded-lg p-3 text-sm text-ocean-120">
-          Retomando operacao incompleta...
+          {t('resumingIncomplete')}
         </div>
       )}
 
@@ -403,7 +405,7 @@ export default function Status() {
         <div className="flex items-center gap-2 mb-2">
           <Building2 className="w-4 h-4 text-ocean-120" />
           <p className="text-sm font-medium text-ocean-180">
-            Subsidiaries {totalSubs > 0 && `(${totalSubsCreated}/${totalSubs})`}
+            {t('subsidiaries')} {totalSubs > 0 && `(${totalSubsCreated}/${totalSubs})`}
           </p>
           {phase === 'subsidiary' && (
             <Loader2 className="w-4 h-4 text-ocean-120 animate-spin" />
@@ -440,7 +442,7 @@ export default function Status() {
         )}
 
         {subsidiaryResults.length === 0 && phase !== 'subsidiary' && (
-          <p className="text-xs text-ocean-60">Aguardando...</p>
+          <p className="text-xs text-ocean-60">{t('waiting')}</p>
         )}
       </div>
 
@@ -461,7 +463,7 @@ export default function Status() {
             )}
             <div className="flex-1">
               <p className="text-sm font-medium text-ocean-180">
-                Plano de Contas ({accountsProgress.created}/{accountsProgress.total})
+                {t('chartOfAccounts')} ({accountsProgress.created}/{accountsProgress.total})
               </p>
               {currentAccount && phase === 'accounts' && (
                 <p className="text-xs text-ocean-60 truncate">{currentAccount}</p>
@@ -484,7 +486,7 @@ export default function Status() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
             <h4 className="text-sm font-medium text-rose">
-              Erros ({errors.length})
+              {t('errors')} ({errors.length})
             </h4>
             {phase === 'done' && errors.some((e) => e.index !== undefined && isRetryable(e.error) && (e.retryCount || 0) < 2) && (
               <button
@@ -492,7 +494,7 @@ export default function Status() {
                 className="text-xs text-ocean-150 hover:text-ocean-180 flex items-center gap-1"
               >
                 <RotateCcw className="w-3 h-3" />
-                Retry todos
+                {t('retryAll')}
               </button>
             )}
           </div>
@@ -506,10 +508,10 @@ export default function Status() {
                     <p className="text-rose font-medium">{err.account}</p>
                     <p className="text-rose break-all">{err.error}</p>
                     {err.retryCount >= 2 && (
-                      <p className="text-ocean-60 text-[10px]">Max retries atingido</p>
+                      <p className="text-ocean-60 text-[10px]">{t('maxRetries')}</p>
                     )}
                     {err.index !== undefined && !isRetryable(err.error) && (
-                      <p className="text-ocean-60 text-[10px]">Erro permanente — nao retentavel</p>
+                      <p className="text-ocean-60 text-[10px]">{t('permanentError')}</p>
                     )}
                   </div>
                   {canRetry && (
@@ -518,7 +520,7 @@ export default function Status() {
                       className="flex items-center gap-1 text-rose hover:text-rose flex-shrink-0"
                     >
                       <RotateCcw className="w-3 h-3" />
-                      <span>Retry</span>
+                      <span>{t('retry')}</span>
                     </button>
                   )}
                 </div>
@@ -532,12 +534,12 @@ export default function Status() {
       {phase === 'done' && errors.length === 0 && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
           <CheckCircle className="w-8 h-8 text-pine mx-auto mb-2" />
-          <p className="text-sm font-medium text-pine">Tudo criado com sucesso!</p>
+          <p className="text-sm font-medium text-pine">{t('allCreatedSuccess')}</p>
           <p className="text-xs text-pine mt-1">
-            {totalSubs > 1 && `${totalSubsCreated} subsidiaries`}
-            {totalSubs === 1 && 'Subsidiary'}
-            {accountsProgress.total > 0 && ` + ${accountsProgress.created} contas`}
-            {' criadas no NetSuite'}
+            {totalSubs > 1 && t('subsidiariesCount', { count: totalSubsCreated })}
+            {totalSubs === 1 && t('singleSubsidiary')}
+            {accountsProgress.total > 0 && t('accountsCount', { count: accountsProgress.created })}
+            {' '}{t('createdInNetSuite')}
           </p>
         </div>
       )}
@@ -551,7 +553,7 @@ export default function Status() {
               className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm border border-ocean-120 text-ocean-120 rounded-md hover:bg-ocean-10"
             >
               <RotateCcw className="w-3 h-3" />
-              Retomar Criacao
+              {t('resumeCreation')}
             </button>
           )}
           <button
@@ -559,7 +561,7 @@ export default function Status() {
             className="flex-1 flex items-center justify-center gap-1 px-3 py-2 text-sm border border-ocean-30 text-ocean-150 rounded-md hover:bg-ocean-10"
           >
             <ArrowLeft className="w-3 h-3" />
-            Voltar para Revisao
+            {t('backToReview')}
           </button>
         </div>
       )}
@@ -567,7 +569,7 @@ export default function Status() {
       {/* Debug log */}
       {debugLog.length > 0 && (
         <details className="bg-neutral border border-ocean-30 rounded-lg p-3">
-          <summary className="text-xs text-ocean-150 cursor-pointer">Log de debug ({debugLog.length})</summary>
+          <summary className="text-xs text-ocean-150 cursor-pointer">{t('debugLog')} ({debugLog.length})</summary>
           <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
             {debugLog.map((log, i) => (
               <p key={i} className="text-xs font-mono text-ocean-150 break-all">{log}</p>

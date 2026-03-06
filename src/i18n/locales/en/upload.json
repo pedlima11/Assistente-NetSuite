@@ -1,0 +1,13 @@
+{
+  "importLabels": {
+    "plano-de-contas": "Chart of Accounts",
+    "dre": "DRE",
+    "balanco": "Balance Sheet"
+  },
+  "defaultTitle": "File Upload",
+  "backHome": "Home",
+  "parsing": "Extracting data from Excel...",
+  "structuring": "Structuring data with Claude AI...",
+  "processing": "Processing...",
+  "processFile": "Process File"
+}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft, ArrowRight, Loader2, AlertTriangle, DollarSign,
   Building2, Calendar, Search, Edit3, CheckCircle, XCircle,
@@ -14,9 +15,10 @@ import { fetchNetSuiteAccounts, suggestAccountMapping } from '../../services/jou
  * Badge de status do mapeamento
  */
 function MatchBadge({ type }) {
-  if (type === 'exact') return <span className="text-pine" title="Match exato por numero">OK</span>;
-  if (type === 'fuzzy') return <span className="text-golden" title="Sugestao por nome (verifique)">~</span>;
-  return <span className="text-rose" title="Sem mapeamento">?</span>;
+  const { t } = useTranslation('balance');
+  if (type === 'exact') return <span className="text-pine" title={t('tooltipExact')}>OK</span>;
+  if (type === 'fuzzy') return <span className="text-golden" title={t('tooltipFuzzy')}>~</span>;
+  return <span className="text-rose" title={t('tooltipNone')}>?</span>;
 }
 
 const fmtBRL = (v) =>
@@ -26,6 +28,7 @@ const fmtBRL = (v) =>
  * Input de valor BRL — mostra formatado, edita como numero
  */
 function BRLInput({ value, onChange, className }) {
+  const { t } = useTranslation('balance');
   const [editing, setEditing] = useState(false);
   const [raw, setRaw] = useState('');
 
@@ -52,7 +55,7 @@ function BRLInput({ value, onChange, className }) {
     <span
       onClick={() => { setRaw(value || ''); setEditing(true); }}
       className={`inline-block w-20 text-right px-1 py-0.5 rounded text-xs cursor-pointer hover:bg-ocean-10 ${className || ''}`}
-      title="Clique para editar"
+      title={t('clickToEdit')}
     >
       {fmtBRL(value)}
     </span>
@@ -61,6 +64,7 @@ function BRLInput({ value, onChange, className }) {
 
 export default function BalanceUpload() {
   const navigate = useNavigate();
+  const { t } = useTranslation('balance');
 
   // Upload state
   const [file, setFile] = useState(null);
@@ -208,13 +212,13 @@ export default function BalanceUpload() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-medium text-ocean-180">Saldos Contabeis</h2>
+        <h2 className="text-base font-medium text-ocean-180">{t('title')}</h2>
         <button
           onClick={() => navigate('/')}
           className="text-sm text-ocean-150 hover:text-ocean-180 flex items-center gap-1"
         >
           <ArrowLeft className="w-3 h-3" />
-          Inicio
+          {t('home')}
         </button>
       </div>
 
@@ -222,15 +226,15 @@ export default function BalanceUpload() {
       <div className="bg-white rounded-lg border border-ocean-30 p-4">
         <div className="flex items-center gap-2 mb-3">
           <Building2 className="w-5 h-5 text-ocean-120" />
-          <h3 className="text-sm font-medium text-ocean-180">Subsidiary</h3>
+          <h3 className="text-sm font-medium text-ocean-180">{t('subsidiary')}</h3>
         </div>
         {loadingSubs ? (
           <div className="flex items-center gap-2 text-sm text-ocean-150">
             <Loader2 className="w-4 h-4 animate-spin" />
-            Carregando...
+            {t('loading')}
           </div>
         ) : subsidiaries.length === 0 ? (
-          <p className="text-sm text-rose">Nenhuma subsidiary encontrada. Crie uma primeiro.</p>
+          <p className="text-sm text-rose">{t('noSubsidiary')}</p>
         ) : (
           <select
             value={selectedSubId}
@@ -245,7 +249,7 @@ export default function BalanceUpload() {
           </select>
         )}
         <p className="text-xs text-ocean-60 mt-2">
-          As contas da subsidiary ja devem existir no NetSuite.
+          {t('accountsMustExist')}
         </p>
       </div>
 
@@ -255,8 +259,8 @@ export default function BalanceUpload() {
       {processing && (
         <div className="flex items-center gap-2 text-sm text-ocean-120">
           <Loader2 className="w-4 h-4 animate-spin" />
-          {step === 'parsing' && 'Extraindo dados do Excel...'}
-          {step === 'extracting' && 'Extraindo saldos com Claude AI...'}
+          {step === 'parsing' && t('parsingExcel')}
+          {step === 'extracting' && t('extractingBalances')}
         </div>
       )}
 
@@ -274,7 +278,7 @@ export default function BalanceUpload() {
           className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-ocean-120 text-white rounded-md text-sm font-medium hover:bg-ocean-150 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
-          {processing ? 'Processando...' : 'Extrair Saldos'}
+          {processing ? t('processing') : t('extractBalances')}
         </button>
       )}
 
@@ -284,7 +288,7 @@ export default function BalanceUpload() {
           <div className="bg-white rounded-lg border border-ocean-30 p-4">
             <div className="flex items-center gap-2 mb-3">
               <Calendar className="w-5 h-5 text-ocean-120" />
-              <h3 className="text-sm font-medium text-ocean-180">Data do Lancamento</h3>
+              <h3 className="text-sm font-medium text-ocean-180">{t('transactionDate')}</h3>
             </div>
             <input
               type="date"
@@ -293,7 +297,7 @@ export default function BalanceUpload() {
               className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120"
             />
             {referenceDate && referenceDate !== trandate && (
-              <p className="text-xs text-ocean-60 mt-1">Data detectada no arquivo: {referenceDate}</p>
+              <p className="text-xs text-ocean-60 mt-1">{t('dateDetected', { date: referenceDate })}</p>
             )}
           </div>
 
@@ -305,7 +309,7 @@ export default function BalanceUpload() {
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-ocean-120 text-white rounded-md text-sm font-medium hover:bg-ocean-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {resolving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              {resolving ? 'Buscando contas NetSuite...' : `Mapear ${rawBalances.length} contas para NetSuite`}
+              {resolving ? t('fetchingAccounts') : t('mapAccounts', { count: rawBalances.length })}
             </button>
           )}
 
@@ -316,13 +320,13 @@ export default function BalanceUpload() {
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-5 h-5 text-ocean-120" />
                   <h3 className="text-sm font-medium text-ocean-180">
-                    Mapeamento ({mappedBalances.length} linhas)
+                    {t('mappingTitle', { count: mappedBalances.length })}
                   </h3>
                 </div>
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="text-pine">{exactCount} exatas</span>
-                  <span className="text-golden">{fuzzyCount} sugeridas</span>
-                  {unmappedCount > 0 && <span className="text-rose">{unmappedCount} sem mapa</span>}
+                  <span className="text-pine">{exactCount} {t('exact')}</span>
+                  <span className="text-golden">{fuzzyCount} {t('suggested')}</span>
+                  {unmappedCount > 0 && <span className="text-rose">{unmappedCount} {t('unmapped')}</span>}
                 </div>
               </div>
 
@@ -331,10 +335,10 @@ export default function BalanceUpload() {
                   <thead className="sticky top-0 bg-white z-10">
                     <tr className="text-left text-ocean-150 border-b border-ocean-30/50">
                       <th className="pb-2 pr-1 w-5"></th>
-                      <th className="pb-2 pr-1">Arquivo</th>
-                      <th className="pb-2 pr-1">Conta NetSuite</th>
-                      <th className="pb-2 pr-1 text-right">Debito</th>
-                      <th className="pb-2 text-right">Credito</th>
+                      <th className="pb-2 pr-1">{t('fileColumn')}</th>
+                      <th className="pb-2 pr-1">{t('nsAccountColumn')}</th>
+                      <th className="pb-2 pr-1 text-right">{t('debitColumn')}</th>
+                      <th className="pb-2 text-right">{t('creditColumn')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -360,7 +364,7 @@ export default function BalanceUpload() {
                               'border-ocean-30'
                             }`}
                           >
-                            <option value="">-- Selecione --</option>
+                            <option value="">{t('selectPlaceholder')}</option>
                             {detailAccounts.map((acct) => (
                               <option key={acct.id} value={acct.id}>
                                 {acct.number} - {acct.name}{acct.description ? ` (${acct.description})` : ''}
@@ -385,7 +389,7 @@ export default function BalanceUpload() {
                   </tbody>
                   <tfoot>
                     <tr className="border-t-2 border-ocean-120 font-medium text-ocean-180">
-                      <td colSpan={3} className="py-2 pr-1">Total</td>
+                      <td colSpan={3} className="py-2 pr-1">{t('total')}</td>
                       <td className="py-2 pr-1 text-right">{totalDebit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                       <td className="py-2 text-right">{totalCredit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                     </tr>
@@ -398,17 +402,16 @@ export default function BalanceUpload() {
                 <div className="mt-2 flex items-center gap-2 text-xs text-golden bg-yellow-50 rounded p-2">
                   <AlertTriangle className="w-3 h-3 flex-shrink-0" />
                   <span>
-                    Diferenca de {Math.abs(difference).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    {' '}— verifique os valores antes de prosseguir.
+                    {t('differenceWarning', { value: Math.abs(difference).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) })}
                   </span>
                 </div>
               )}
 
               {/* Legend */}
               <div className="mt-2 flex flex-wrap gap-3 text-xs text-ocean-60">
-                <span><span className="text-pine font-medium">OK</span> = match exato</span>
-                <span><span className="text-golden font-medium">~</span> = sugestao por nome</span>
-                <span><span className="text-rose font-medium">?</span> = sem mapeamento</span>
+                <span><span className="text-pine font-medium">OK</span> = {t('legendExact')}</span>
+                <span><span className="text-golden font-medium">~</span> = {t('legendSuggestion')}</span>
+                <span><span className="text-rose font-medium">?</span> = {t('legendNoMapping')}</span>
               </div>
             </div>
           )}
@@ -421,9 +424,9 @@ export default function BalanceUpload() {
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-pine text-white rounded-md text-sm font-medium hover:bg-ocean-150 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ArrowRight className="w-4 h-4" />
-              Definir Saldos Iniciais ({mappedCount} contas)
+              {t('setOpeningBalances', { count: mappedCount })}
               {unmappedCount > 0 && (
-                <span className="text-xs opacity-75">({unmappedCount} ignoradas)</span>
+                <span className="text-xs opacity-75">({unmappedCount} {t('ignored')})</span>
               )}
             </button>
           )}

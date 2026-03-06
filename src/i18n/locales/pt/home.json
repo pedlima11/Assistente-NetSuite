@@ -1,0 +1,37 @@
+{
+  "roadmapTitle": "Roteiro de Implantacao",
+  "stepOf": "Passo {{current}} de {{total}}",
+  "steps": {
+    "settings": {
+      "title": "Configuracao",
+      "description": "Cadastre as credenciais OAuth do NetSuite e a chave da Claude API para conectar o assistente.",
+      "button": "Configurar"
+    },
+    "coa": {
+      "title": "Filial & Plano de Contas",
+      "description": "Crie a filial no NetSuite e/ou importe o plano de contas a partir de uma planilha.",
+      "button": "Importar Planilha",
+      "secondaryButton": "Criar Filial"
+    },
+    "customers": {
+      "title": "Clientes",
+      "description": "Importe o cadastro de clientes da empresa a partir de planilhas.",
+      "button": "Importar"
+    },
+    "vendors": {
+      "title": "Fornecedores",
+      "description": "Importe o cadastro de fornecedores da empresa a partir de planilhas.",
+      "button": "Importar"
+    },
+    "items": {
+      "title": "Itens",
+      "description": "Importe o cadastro de produtos e servicos da empresa.",
+      "button": "Importar"
+    },
+    "taxRules": {
+      "title": "Regras Fiscais",
+      "description": "Importe XMLs de NF-e para regras de saida e arquivos SPED para regras de entrada.",
+      "button": "Gerar Regras"
+    }
+  }
+}

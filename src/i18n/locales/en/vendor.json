@@ -1,0 +1,48 @@
+{
+  "title": "Import Vendors",
+  "home": "Home",
+  "steps": {
+    "upload": "1. Upload",
+    "review": "2. Review",
+    "import": "3. Import"
+  },
+  "upload": {
+    "dragOrSelect": "Drag a CSV or Excel file",
+    "remove": "Remove",
+    "invalidFormat": "Invalid format. Use .csv, .xls or .xlsx",
+    "fileTooLarge": "File exceeds 50MB",
+    "config": "Configuration",
+    "subsidiary": "Subsidiary",
+    "loadingSubsidiaries": "Loading subsidiaries...",
+    "selectSubsidiary": "Select a subsidiary",
+    "subsidiaryPlaceholder": "Subsidiary name in NetSuite",
+    "processFile": "Process File",
+    "processing": "Processing..."
+  },
+  "review": {
+    "vendors": "vendors",
+    "pj": "PJ",
+    "pf": "PF",
+    "withErrors": "with errors",
+    "companyName": "Company Name",
+    "document": "CNPJ/CPF",
+    "email": "Email",
+    "phone": "Phone",
+    "back": "Back",
+    "import": "Import"
+  },
+  "import": {
+    "summary": "Import Summary",
+    "total": "Total",
+    "vendorsCreated": "vendors created",
+    "errors": "errors",
+    "importing": "Importing...",
+    "importToNetsuite": "Import to NetSuite",
+    "exportCsv": "Export CSV",
+    "back": "Back",
+    "line": "Row",
+    "generalError": "General error",
+    "andMore": "...and {{count}} more errors",
+    "errorProcessing": "Error processing file: {{message}}"
+  }
+}

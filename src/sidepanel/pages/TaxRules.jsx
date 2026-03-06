@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, ArrowRight, Loader2, Download, FileSpreadsheet,
@@ -20,6 +21,7 @@ import { translateWarning } from '../../utils/warning-translator.js';
 // ── SPED Processing Summary ─────────────────────────────────────────────────
 
 function SpedSummary({ rawStats, qualityStats, companyInfo }) {
+  const { t } = useTranslation('tax');
   const [expanded, setExpanded] = useState(false);
 
   if (!rawStats || !qualityStats) return null;
@@ -34,22 +36,22 @@ function SpedSummary({ rawStats, qualityStats, companyInfo }) {
     <div className="bg-ocean-10 rounded-lg p-3 space-y-2">
       {companyInfo && (
         <p className="text-xs text-ocean-150">
-          Empresa: <span className="font-medium">{companyInfo.nome}</span> — CNPJ: {companyInfo.cnpj} — UF: {companyInfo.uf}
+          {t('spedSummary.company')}: <span className="font-medium">{companyInfo.nome}</span> — {t('spedSummary.cnpjLabel')}: {companyInfo.cnpj} — {t('spedSummary.ufLabel')}: {companyInfo.uf}
         </p>
       )}
 
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
           <p className="text-base font-bold text-ocean-180">{acceptedDocs}</p>
-          <p className="text-xs text-ocean-60">Docs aceitos</p>
+          <p className="text-xs text-ocean-60">{t('spedSummary.docsAccepted')}</p>
         </div>
         <div>
           <p className="text-base font-bold text-ocean-180">{qualityStats.itemsAccepted}</p>
-          <p className="text-xs text-ocean-60">Itens aceitos</p>
+          <p className="text-xs text-ocean-60">{t('spedSummary.itemsAccepted')}</p>
         </div>
         <div>
           <p className="text-base font-bold text-golden">{qualityStats.itemsRejected}</p>
-          <p className="text-xs text-ocean-60">Itens rejeitados</p>
+          <p className="text-xs text-ocean-60">{t('spedSummary.itemsRejected')}</p>
         </div>
       </div>
 
@@ -58,18 +60,18 @@ function SpedSummary({ rawStats, qualityStats, companyInfo }) {
         className="text-xs text-ocean-120 hover:text-ocean-180 flex items-center gap-1"
       >
         {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-        Detalhes
+        {t('spedSummary.details')}
       </button>
 
       {expanded && (
         <div className="text-xs text-ocean-150 space-y-1 border-t border-ocean-30 pt-2">
-          <p>{totalLines.toLocaleString()} linhas lidas em {rawStats.length} arquivo(s)</p>
-          <p>Documentos: {totalDocs} lidos, {acceptedDocs} aceitos, {rejectedDocs} rejeitados por status</p>
-          <p>CFOPs unicos: {qualityStats.uniqueCFOPs} | NCMs unicos: {qualityStats.uniqueNCMs} | UFs: {qualityStats.uniqueUFs}</p>
+          <p>{t('spedSummary.linesRead', { count: totalLines.toLocaleString(), files: rawStats.length })}</p>
+          <p>{t('spedSummary.documents', { total: totalDocs, accepted: acceptedDocs, rejected: rejectedDocs })}</p>
+          <p>{t('spedSummary.uniqueStats', { cfops: qualityStats.uniqueCFOPs, ncms: qualityStats.uniqueNCMs, ufs: qualityStats.uniqueUFs })}</p>
 
           {qualityStats.itemsWarning > 0 && (
             <p className="text-yellow-600">
-              {qualityStats.itemsWarning} itens com avisos
+              {t('spedSummary.itemsWithWarnings', { count: qualityStats.itemsWarning })}
               {qualityStats.warningReasons && Object.keys(qualityStats.warningReasons).length > 0 && (
                 <span> ({Object.entries(qualityStats.warningReasons).map(([k, v]) => `${k}: ${v}`).join(', ')})</span>
               )}
@@ -78,13 +80,13 @@ function SpedSummary({ rawStats, qualityStats, companyInfo }) {
 
           {qualityStats.itemsRejected > 0 && qualityStats.rejectionReasons && (
             <p className="text-rose">
-              Rejeicoes: {Object.entries(qualityStats.rejectionReasons).map(([k, v]) => `${k}: ${v}`).join(', ')}
+              {t('spedSummary.rejections')}: {Object.entries(qualityStats.rejectionReasons).map(([k, v]) => `${k}: ${v}`).join(', ')}
             </p>
           )}
 
           {rawStats.some(r => r.skippedByCodSit && Object.keys(r.skippedByCodSit).length > 0) && (
             <p>
-              COD_SIT ignorados: {(() => {
+              {t('spedSummary.codSitIgnored')}: {(() => {
                 const agg = rawStats.flatMap(r => Object.entries(r.skippedByCodSit || {}))
                   .reduce((acc, [k, v]) => { acc[k] = (acc[k] || 0) + v; return acc; }, {});
                 return Object.entries(agg).map(([k, v]) => `${k}: ${v}`).join(', ');
@@ -100,6 +102,7 @@ function SpedSummary({ rawStats, qualityStats, companyInfo }) {
 // ── SPED Quality Gate ────────────────────────────────────────────────────────
 
 function SpedQualityGate({ qualityStats, onAcknowledge, onBack }) {
+  const { t } = useTranslation('tax');
   const [acknowledged, setAcknowledged] = useState(false);
 
   if (!qualityStats) return null;
@@ -114,25 +117,25 @@ function SpedQualityGate({ qualityStats, onAcknowledge, onBack }) {
       <div className="bg-white rounded-lg border border-rose/30 p-4 space-y-4">
         <div className="flex items-center gap-2 text-rose">
           <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-          <h3 className="font-semibold text-sm">Diagnostico de Qualidade do SPED</h3>
+          <h3 className="font-semibold text-sm">{t('qualityGate.title')}</h3>
         </div>
 
         {/* Blocking: CST ausente */}
         {noIcmsCst > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-2">
             <p className="text-sm font-medium text-red-800">
-              {noIcmsCst.toLocaleString()} {noIcmsCst === 1 ? 'item' : 'itens'} sem CST de ICMS no registro C170
+              {t('qualityGate.itemsWithoutCst', { count: noIcmsCst.toLocaleString() })}
             </p>
             <p className="text-xs text-red-700">
-              O campo CST_ICMS (campo 10 do C170) esta vazio no arquivo SPED. Esse campo e obrigatorio para documentos regulares (COD_SIT 00/01). Sem ele, o sistema nao consegue gerar regras de ICMS corretas para esses itens.
+              {t('qualityGate.cstMissing')}
             </p>
             {cfopEntries.length > 0 && (
               <div className="text-xs text-red-700">
-                <p className="font-medium mb-1">Breakdown por CFOP:</p>
+                <p className="font-medium mb-1">{t('qualityGate.breakdownByCfop')}</p>
                 <div className="flex flex-wrap gap-2">
                   {cfopEntries.map(([cfop, count]) => (
                     <span key={cfop} className="bg-red-100 px-2 py-0.5 rounded font-mono">
-                      {cfop}: {count} {count === 1 ? 'item' : 'itens'}
+                      {cfop}: {count} {count === 1 ? t('qualityGate.item') : t('qualityGate.items')}
                     </span>
                   ))}
                 </div>
@@ -145,10 +148,10 @@ function SpedQualityGate({ qualityStats, onAcknowledge, onBack }) {
         {invalidNcm > 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
             <p className="text-sm font-medium text-amber-800">
-              {invalidNcm.toLocaleString()} {invalidNcm === 1 ? 'item' : 'itens'} com NCM invalido (00000000)
+              {t('qualityGate.invalidNcmCount', { count: invalidNcm.toLocaleString() })}
             </p>
             <p className="text-xs text-amber-700 mt-1">
-              NCM placeholder nao permite gerar excecoes fiscais por produto. Atualize o cadastro de itens no ERP.
+              {t('qualityGate.invalidNcmExplanation')}
             </p>
           </div>
         )}
@@ -157,7 +160,7 @@ function SpedQualityGate({ qualityStats, onAcknowledge, onBack }) {
         <div className="bg-ocean-10 rounded-lg p-3 flex items-start gap-2">
           <Info className="w-4 h-4 text-ocean-120 mt-0.5 flex-shrink-0" />
           <p className="text-xs text-ocean-150">
-            <span className="font-medium">Recomendacao:</span> Corrija a parametrizacao do ERP de origem ou solicite ao escritorio contabil que revise o SPED antes de importar. Itens sem CST de ICMS serao agrupados como "(sem CST)" na revisao.
+            <span className="font-medium">{t('qualityGate.recommendation')}</span> {t('qualityGate.recommendationText')}
           </p>
         </div>
 
@@ -170,7 +173,7 @@ function SpedQualityGate({ qualityStats, onAcknowledge, onBack }) {
             className="mt-0.5 accent-ocean-120"
           />
           <span className="text-xs text-ocean-150">
-            Estou ciente dos problemas de qualidade e desejo prosseguir com os dados disponiveis
+            {t('qualityGate.acknowledgeLabel')}
           </span>
         </label>
 
@@ -180,14 +183,14 @@ function SpedQualityGate({ qualityStats, onAcknowledge, onBack }) {
             onClick={onBack}
             className="flex items-center gap-1 px-3 py-1.5 text-xs text-ocean-120 hover:text-ocean-180 border border-ocean-30 rounded-lg hover:bg-ocean-10"
           >
-            <ArrowLeft className="w-3 h-3" /> Voltar
+            <ArrowLeft className="w-3 h-3" /> {t('qualityGate.back')}
           </button>
           <button
             onClick={onAcknowledge}
             disabled={!acknowledged}
             className="flex items-center gap-1 px-4 py-1.5 text-xs text-white bg-ocean-120 rounded-lg hover:bg-ocean-150 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Prosseguir <ArrowRight className="w-3 h-3" />
+            {t('qualityGate.proceed')} <ArrowRight className="w-3 h-3" />
           </button>
         </div>
       </div>
@@ -198,6 +201,7 @@ function SpedQualityGate({ qualityStats, onAcknowledge, onBack }) {
 // ── Block M Validation Banner ────────────────────────────────────────────────
 
 function BlockMBanner({ validation }) {
+  const { t } = useTranslation('tax');
   const [expanded, setExpanded] = useState(false);
 
   if (!validation || !validation.summary) return null;
@@ -217,7 +221,7 @@ function BlockMBanner({ validation }) {
             : <CheckCircle className="w-4 h-4 text-green-600" />
           }
           <span className={`text-sm font-medium ${hasWarnings ? 'text-amber-800' : 'text-green-800'}`}>
-            Validacao Bloco M {hasWarnings ? `— ${warningMatches.length} aviso(s)` : '— OK'}
+            {t('blockM.validationTitle')} {hasWarnings ? `— ${t('blockM.warnings', { count: warningMatches.length })}` : `— ${t('blockM.ok')}`}
           </span>
         </div>
         <button
@@ -225,22 +229,22 @@ function BlockMBanner({ validation }) {
           className="text-xs text-ocean-120 hover:text-ocean-180 flex items-center gap-0.5"
         >
           {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          {expanded ? 'Recolher' : 'Detalhes'}
+          {expanded ? t('blockM.collapse') : t('blockM.details')}
         </button>
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-center text-xs">
         <div>
           <p className="font-bold text-ocean-180">{Math.round((summary.coverage || 0) * 100)}%</p>
-          <p className="text-ocean-60">Cobertura NAT</p>
+          <p className="text-ocean-60">{t('blockM.natCoverage')}</p>
         </div>
         <div>
           <p className="font-bold text-green-700">{summary.okCount || 0}</p>
-          <p className="text-ocean-60">NATs OK</p>
+          <p className="text-ocean-60">{t('blockM.natsOk')}</p>
         </div>
         <div>
           <p className="font-bold text-amber-600">{summary.warningCount || 0}</p>
-          <p className="text-ocean-60">NATs com aviso</p>
+          <p className="text-ocean-60">{t('blockM.natsWarning')}</p>
         </div>
       </div>
 
@@ -255,16 +259,19 @@ function BlockMBanner({ validation }) {
                 : <CheckCircle className="w-3 h-3 flex-shrink-0" />
               }
               <span>
-                NAT {m.nat}: oficial R$ {(m.officialBase || 0).toLocaleString('pt-BR')}{' '}
-                vs calculado R$ {(m.calculatedBase || 0).toLocaleString('pt-BR')}{' '}
-                (diff: {m.diffPercent != null ? `${m.diffPercent.toFixed(1)}%` : 'N/A'})
+                {t('blockM.natLine', {
+                  nat: m.nat,
+                  official: (m.officialBase || 0).toLocaleString('pt-BR'),
+                  calculated: (m.calculatedBase || 0).toLocaleString('pt-BR'),
+                  diff: m.diffPercent != null ? `${m.diffPercent.toFixed(1)}%` : t('blockM.diffNA'),
+                })}
               </span>
             </div>
           ))}
 
           {summary.sourcesUsed && (
             <div className="text-xs text-ocean-100 mt-1 pt-1 border-t border-ocean-30">
-              Fontes: {Object.entries(summary.sourcesUsed).map(([k, v]) => `${k}: ${v}`).join(', ')}
+              {t('blockM.sources')}: {Object.entries(summary.sourcesUsed).map(([k, v]) => `${k}: ${v}`).join(', ')}
             </div>
           )}
         </div>
@@ -275,16 +282,17 @@ function BlockMBanner({ validation }) {
 
 // ── Needs Review Banner ─────────────────────────────────────────────────────
 
-const REASON_CONFIG = {
-  DEST_UF_MISSING: { label: 'UF destino ausente', color: 'text-rose', bg: 'bg-rose/10', severity: 'grave' },
-  CONFLICT_SAME_NCM: { label: 'Conflito mesmo NCM', color: 'text-orange-700', bg: 'bg-orange-50', severity: 'medio' },
-  EMIT_UF_MISSING: { label: 'UF emissor ausente', color: 'text-amber-700', bg: 'bg-amber-50', severity: 'leve' },
-  CFOP_INVALID: { label: 'CFOP invalido', color: 'text-amber-700', bg: 'bg-amber-50', severity: 'leve' },
-  OP_UNKNOWN: { label: 'Operacao desconhecida', color: 'text-amber-700', bg: 'bg-amber-50', severity: 'leve' },
-  PARAMTYPE_MISSING: { label: 'Param. tipo ausente (ICMS ST)', color: 'text-orange-700', bg: 'bg-orange-50', severity: 'medio' },
+const REASON_STYLE = {
+  DEST_UF_MISSING: { color: 'text-rose', bg: 'bg-rose/10', severity: 'grave' },
+  CONFLICT_SAME_NCM: { color: 'text-orange-700', bg: 'bg-orange-50', severity: 'medio' },
+  EMIT_UF_MISSING: { color: 'text-amber-700', bg: 'bg-amber-50', severity: 'leve' },
+  CFOP_INVALID: { color: 'text-amber-700', bg: 'bg-amber-50', severity: 'leve' },
+  OP_UNKNOWN: { color: 'text-amber-700', bg: 'bg-amber-50', severity: 'leve' },
+  PARAMTYPE_MISSING: { color: 'text-orange-700', bg: 'bg-orange-50', severity: 'medio' },
 };
 
 function NeedsReviewBanner({ needsReview }) {
+  const { t } = useTranslation('tax');
   const [expanded, setExpanded] = useState(false);
   const byReason = needsReview.byReason || {};
   const totalItems = needsReview.items?.length || 0;
@@ -292,6 +300,12 @@ function NeedsReviewBanner({ needsReview }) {
   if (totalItems === 0) return null;
 
   const hasGrave = !!byReason.DEST_UF_MISSING;
+
+  function getReasonLabel(reason) {
+    const key = `reasonConfig.${reason}`;
+    const translated = t(key, { defaultValue: '' });
+    return translated || reason;
+  }
 
   return (
     <div className={`rounded-lg border p-3 space-y-2 ${
@@ -301,7 +315,7 @@ function NeedsReviewBanner({ needsReview }) {
         <div className="flex items-center gap-2">
           <AlertTriangle className={`w-4 h-4 ${hasGrave ? 'text-rose' : 'text-amber-600'}`} />
           <span className={`text-sm font-medium ${hasGrave ? 'text-rose' : 'text-amber-800'}`}>
-            {totalItems} ite{totalItems === 1 ? 'm' : 'ns'} necessitam revisao
+            {t('needsReview.itemsNeedReview', { count: totalItems, suffix: totalItems === 1 ? 'm' : 'ns' })}
           </span>
         </div>
         <button
@@ -309,7 +323,7 @@ function NeedsReviewBanner({ needsReview }) {
           className="text-xs text-ocean-120 hover:text-ocean-180 flex items-center gap-0.5"
         >
           {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          {expanded ? 'Recolher' : 'Detalhes'}
+          {expanded ? t('needsReview.collapse') : t('needsReview.details')}
         </button>
       </div>
 
@@ -320,10 +334,10 @@ function NeedsReviewBanner({ needsReview }) {
             return (order[a[0]] ?? 9) - (order[b[0]] ?? 9);
           })
           .map(([reason, data]) => {
-            const cfg = REASON_CONFIG[reason] || { label: reason, color: 'text-ocean-150', bg: 'bg-ocean-10' };
+            const cfg = REASON_STYLE[reason] || { color: 'text-ocean-150', bg: 'bg-ocean-10' };
             return (
               <div key={reason} className={`flex items-center justify-between rounded px-2 py-1 ${cfg.bg}`}>
-                <span className={`text-xs font-medium ${cfg.color}`}>{cfg.label}</span>
+                <span className={`text-xs font-medium ${cfg.color}`}>{getReasonLabel(reason)}</span>
                 <div className="flex items-center gap-3 text-xs">
                   <span className={cfg.color}>{data.count} ite{data.count === 1 ? 'm' : 'ns'}</span>
                   <span className="text-ocean-100">R$ {data.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
@@ -338,18 +352,18 @@ function NeedsReviewBanner({ needsReview }) {
           <table className="w-full text-xs">
             <thead>
               <tr className="text-ocean-100">
-                <th className="text-left px-1 py-0.5">Motivo</th>
-                <th className="text-left px-1 py-0.5">CFOP</th>
-                <th className="text-left px-1 py-0.5">NCM</th>
-                <th className="text-right px-1 py-0.5">Valor</th>
+                <th className="text-left px-1 py-0.5">{t('needsReview.headerReason')}</th>
+                <th className="text-left px-1 py-0.5">{t('needsReview.headerCfop')}</th>
+                <th className="text-left px-1 py-0.5">{t('needsReview.headerNcm')}</th>
+                <th className="text-right px-1 py-0.5">{t('needsReview.headerValue')}</th>
               </tr>
             </thead>
             <tbody>
               {needsReview.items.slice(0, 50).map((nr, i) => {
-                const cfg = REASON_CONFIG[nr.reason] || { color: 'text-ocean-150' };
+                const cfg = REASON_STYLE[nr.reason] || { color: 'text-ocean-150' };
                 return (
                   <tr key={i} className="border-t border-ocean-10">
-                    <td className={`px-1 py-0.5 ${cfg.color}`}>{cfg.label || nr.reason}</td>
+                    <td className={`px-1 py-0.5 ${cfg.color}`}>{getReasonLabel(nr.reason)}</td>
                     <td className="px-1 py-0.5 text-ocean-150">{nr.item?.cfop || nr.item?.cfopOriginal || '—'}</td>
                     <td className="px-1 py-0.5 text-ocean-150">{nr.item?.ncm || '—'}</td>
                     <td className="px-1 py-0.5 text-right text-ocean-150">
@@ -362,7 +376,7 @@ function NeedsReviewBanner({ needsReview }) {
           </table>
           {needsReview.items.length > 50 && (
             <p className="text-xs text-ocean-60 mt-1 text-center">
-              Mostrando 50 de {needsReview.items.length} itens
+              {t('needsReview.showing', { total: needsReview.items.length })}
             </p>
           )}
         </div>
@@ -380,6 +394,7 @@ function StepUpload({
   xmlProgress, processingPhase, onCancelXml,
   lookupsStatus, lookupsError,
 }) {
+  const { t } = useTranslation('tax');
   const isSped = source === 'sped';
 
   return (
@@ -389,8 +404,8 @@ function StepUpload({
         <XmlFileUploader
           onFilesChanged={setFiles}
           accept=".txt"
-          label="Arraste arquivos SPED EFD (.txt) aqui ou clique para selecionar"
-          subtitle="Aceita multiplos arquivos .txt do mesmo CNPJ"
+          label={t('stepUpload.spedLabel')}
+          subtitle={t('stepUpload.spedSubtitle')}
           maxFileSize={500 * 1024 * 1024}
         />
       ) : (
@@ -402,15 +417,15 @@ function StepUpload({
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
           <div className="flex items-center gap-1 text-sm text-blue-700 font-medium">
             <Info className="w-4 h-4" />
-            Opcoes do SPED EFD
+            {t('stepUpload.spedOptionsTitle')}
           </div>
           <p className="text-xs text-blue-600">
-            O SPED nao informa o regime do fornecedor. Regras nao serao segmentadas por regime do emissor.
+            {t('stepUpload.spedNoRegimeNote')}
           </p>
           <div className="space-y-1">
             <label className="flex items-center gap-2 text-xs text-ocean-150">
               <input type="checkbox" checked disabled className="rounded" />
-              Regulares e extemporaneos (COD_SIT 00, 01)
+              {t('stepUpload.regularDocs')}
             </label>
             <label className="flex items-center gap-2 text-xs text-ocean-150">
               <input
@@ -419,7 +434,7 @@ function StepUpload({
                 onChange={(e) => setSpedOptions(o => ({ ...o, includeComplementary: e.target.checked }))}
                 className="rounded"
               />
-              Incluir complementares (COD_SIT 06, 07)
+              {t('stepUpload.includeComplementary')}
             </label>
             <label className="flex items-center gap-2 text-xs text-ocean-150">
               <input
@@ -428,7 +443,7 @@ function StepUpload({
                 onChange={(e) => setSpedOptions(o => ({ ...o, includeSpecialRegime: e.target.checked }))}
                 className="rounded"
               />
-              Incluir regime especial (COD_SIT 08)
+              {t('stepUpload.includeSpecialRegime')}
             </label>
             <label className="flex items-center gap-2 text-xs text-ocean-150">
               <input
@@ -437,7 +452,7 @@ function StepUpload({
                 onChange={(e) => setSpedOptions(o => ({ ...o, requireNcm: e.target.checked }))}
                 className="rounded"
               />
-              Exigir NCM para gerar regra (itens sem NCM serao rejeitados)
+              {t('stepUpload.requireNcm')}
             </label>
             <label className="flex items-center gap-2 text-xs text-ocean-150">
               <input
@@ -446,7 +461,7 @@ function StepUpload({
                 onChange={(e) => setSpedOptions(o => ({ ...o, useNcmNetSuite: e.target.checked }))}
                 className="rounded"
               />
-              Enriquecer NCM com cadastro NetSuite (prioriza NCM do item no NS)
+              {t('stepUpload.enrichNcm')}
             </label>
           </div>
         </div>
@@ -454,14 +469,14 @@ function StepUpload({
 
       {/* Config do cliente */}
       <div className="bg-white rounded-lg border border-ocean-30 p-4 space-y-3">
-        <h3 className="text-sm font-medium text-ocean-150 uppercase tracking-wide">Dados do Cliente</h3>
+        <h3 className="text-sm font-medium text-ocean-150 uppercase tracking-wide">{t('stepUpload.clientDataTitle')}</h3>
 
         <div>
-          <label className="block text-xs text-ocean-150 mb-1">Subsidiaria</label>
+          <label className="block text-xs text-ocean-150 mb-1">{t('stepUpload.subsidiaryLabel')}</label>
           {subsLoading ? (
             <div className="flex items-center gap-2 px-3 py-2 border border-ocean-30 rounded-md text-sm text-ocean-60">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Carregando subsidiarias...
+              {t('stepUpload.loadingSubsidiaries')}
             </div>
           ) : subsidiaries.length > 0 ? (
             <select
@@ -472,7 +487,7 @@ function StepUpload({
               }}
               className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             >
-              <option value="">Selecione uma subsidiaria</option>
+              <option value="">{t('stepUpload.selectSubsidiary')}</option>
               {subsidiaries.map(s => (
                 <option key={s.id} value={s.name}>{s.name}</option>
               ))}
@@ -482,7 +497,7 @@ function StepUpload({
               type="text"
               value={config.subsidiaryName}
               onChange={(e) => setConfig(c => ({ ...c, subsidiaryName: e.target.value }))}
-              placeholder="Nome da empresa no NetSuite"
+              placeholder={t('stepUpload.subsidiaryPlaceholder')}
               className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             />
           )}
@@ -491,7 +506,7 @@ function StepUpload({
         <div className="grid grid-cols-2 gap-3">
           {!isSped && (
             <div>
-              <label className="block text-xs text-ocean-150 mb-1">Regime do Emissor</label>
+              <label className="block text-xs text-ocean-150 mb-1">{t('stepUpload.regimeEmissor')}</label>
               <select
                 value={config.regimeEmissor}
                 onChange={(e) => setConfig(c => ({ ...c, regimeEmissor: e.target.value }))}
@@ -503,7 +518,7 @@ function StepUpload({
           )}
           <div className={isSped ? 'col-span-2' : ''}>
             <label className="block text-xs text-ocean-150 mb-1">
-              Regime do {isSped ? 'Declarante (Destinatario)' : 'Destinatario'}
+              {isSped ? t('stepUpload.regimeDestinatarioSped') : t('stepUpload.regimeDestinatario')}
             </label>
             <select
               value={config.regimeDestinatario}
@@ -518,34 +533,34 @@ function StepUpload({
         <div className="grid grid-cols-2 gap-3">
           {!isSped && (
             <div>
-              <label className="block text-xs text-ocean-150 mb-1">Linha de Negocio do Emissor</label>
+              <label className="block text-xs text-ocean-150 mb-1">{t('stepUpload.lobEmissor')}</label>
               <select
                 value={config.lobEmissor}
                 onChange={(e) => setConfig(c => ({ ...c, lobEmissor: e.target.value }))}
                 className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
               >
-                <option value="">Nao informar</option>
+                <option value="">{t('stepUpload.noLob')}</option>
                 {LOBS.map(l => <option key={l} value={l}>{l}</option>)}
               </select>
             </div>
           )}
           <div className={isSped ? 'col-span-2' : ''}>
             <label className="block text-xs text-ocean-150 mb-1">
-              Linha de Negocio do {isSped ? 'Declarante' : 'Destinatario'}
+              {isSped ? t('stepUpload.lobDestinatarioSped') : t('stepUpload.lobDestinatario')}
             </label>
             <select
               value={config.lobDestinatario}
               onChange={(e) => setConfig(c => ({ ...c, lobDestinatario: e.target.value }))}
               className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             >
-              <option value="">Nao informar</option>
+              <option value="">{t('stepUpload.noLob')}</option>
               {LOBS.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
           </div>
         </div>
 
         <div>
-          <label className="block text-xs text-ocean-150 mb-1">Valido a partir de</label>
+          <label className="block text-xs text-ocean-150 mb-1">{t('stepUpload.validFrom')}</label>
           <input
             type="date"
             value={config.validoAPartirDe}
@@ -560,7 +575,7 @@ function StepUpload({
         <div className="bg-white rounded-lg border border-ocean-30 p-3 space-y-2">
           <div className="flex items-center gap-2 text-sm text-ocean-150">
             <Loader2 className="w-4 h-4 animate-spin" />
-            {spedProgress.detail || 'Processando...'}
+            {spedProgress.detail || t('stepUpload.processing')}
           </div>
           <div className="w-full bg-ocean-30 rounded-full h-2">
             <div
@@ -578,10 +593,10 @@ function StepUpload({
             <div className="flex items-center gap-2 text-sm text-ocean-150">
               <Loader2 className="w-4 h-4 animate-spin" />
               {processingPhase === 'generating'
-                ? 'Consolidando regras...'
+                ? t('stepUpload.consolidatingRules')
                 : xmlProgress
-                  ? `Lendo XML ${xmlProgress.current} de ${xmlProgress.total}...`
-                  : 'Processando...'
+                  ? t('stepUpload.readingXml', { current: xmlProgress.current, total: xmlProgress.total })
+                  : t('stepUpload.processing')
               }
             </div>
             {processingPhase === 'parsing' && onCancelXml && (
@@ -589,7 +604,7 @@ function StepUpload({
                 onClick={onCancelXml}
                 className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
               >
-                <X className="w-3 h-3" /> Cancelar
+                <X className="w-3 h-3" /> {t('stepUpload.cancel')}
               </button>
             )}
           </div>
@@ -621,7 +636,7 @@ function StepUpload({
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 space-y-1">
           <div className="flex items-center gap-1 text-sm text-yellow-700 font-medium">
             <AlertTriangle className="w-4 h-4" />
-            Avisos no processamento
+            {t('stepUpload.processingWarnings')}
           </div>
           {parseErrors.map((pe, i) => (
             <p key={i} className="text-xs text-yellow-600">{pe.fileName}: {pe.errors.join('; ')}</p>
@@ -642,17 +657,17 @@ function StepUpload({
           <ArrowRight className="w-4 h-4" />
         )}
         {processing
-          ? (isSped ? 'Processando SPED...' : 'Processando XMLs...')
+          ? (isSped ? t('stepUpload.processingSped') : t('stepUpload.processingXmls'))
           : (lookupsStatus === 'loading' || lookupsStatus === 'idle')
-            ? 'Carregando dados do NetSuite...'
-            : `Processar ${files.length} arquivo${files.length > 1 ? 's' : ''}`
+            ? t('stepUpload.loadingNetSuiteData')
+            : t('stepUpload.processFiles', { count: files.length, plural: files.length > 1 ? 's' : '' })
         }
       </button>
 
       {lookupsStatus === 'error' && (
         <p className="text-xs text-amber-600 mt-1">
-          Nao foi possivel carregar Param Types do NetSuite{lookupsError ? `: ${lookupsError}` : ''}.
-          CBS/IBS serao processados sem validacao de nomes.
+          {t('stepUpload.paramTypeLoadError')}{lookupsError ? `: ${lookupsError}` : ''}.
+          {t('stepUpload.cbsIbsNoValidation')}
         </p>
       )}
     </div>
@@ -662,6 +677,7 @@ function StepUpload({
 // ── Etapa 2: Review ─────────────────────────────────────────────────────────
 
 function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemoveDet, onAddDet, paramTypeOptions, hasReformData }) {
+  const { t } = useTranslation('tax');
   const [expanded, setExpanded] = useState(false);
   const [evidenceExpanded, setEvidenceExpanded] = useState(false);
 
@@ -674,10 +690,10 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
   const confidence = rule.confidenceScore;
   const confidenceBadge = confidence != null ? (
     confidence >= 90
-      ? { label: 'Alta', bg: 'bg-emerald-100', text: 'text-emerald-700' }
+      ? { label: t('ruleCard.confidenceHigh'), bg: 'bg-emerald-100', text: 'text-emerald-700' }
       : confidence >= 70
-        ? { label: 'Media', bg: 'bg-yellow-100', text: 'text-yellow-700' }
-        : { label: 'Baixa', bg: 'bg-red-100', text: 'text-red-700' }
+        ? { label: t('ruleCard.confidenceMedium'), bg: 'bg-yellow-100', text: 'text-yellow-700' }
+        : { label: t('ruleCard.confidenceLow'), bg: 'bg-red-100', text: 'text-red-700' }
   ) : null;
 
   return (
@@ -697,28 +713,28 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm font-medium text-ocean-180 truncate">{rule.name}</p>
             {rule._isException && (
-              <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded flex-shrink-0" title="Regra especifica por NCM porque a tributacao difere da regra geral.">
-                Excecao NCM
+              <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded flex-shrink-0" title={t('ruleCard.ncmExceptionTooltip')}>
+                {t('ruleCard.ncmException')}
               </span>
             )}
             {hasConflicts && (
-              <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded flex-shrink-0" title="Mesma operacao com tributacoes diferentes. Decida qual e a correta.">
-                Conflito
+              <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded flex-shrink-0" title={t('ruleCard.conflictTooltip')}>
+                {t('ruleCard.conflict')}
               </span>
             )}
             {rule.hasConflict && !hasConflicts && (
-              <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded flex-shrink-0" title="Itens tributados de formas diferentes. Verifique se precisa criar excecoes.">
-                Multi-assinatura
+              <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded flex-shrink-0" title={t('ruleCard.multiSignatureTooltip')}>
+                {t('ruleCard.multiSignature')}
               </span>
             )}
             {confidenceBadge && (
-              <span className={`text-xs ${confidenceBadge.bg} ${confidenceBadge.text} px-1.5 py-0.5 rounded flex-shrink-0`} title={`${Math.round(confidence)}% dos itens tem a mesma tributacao. Quanto maior, mais consistente.`}>
+              <span className={`text-xs ${confidenceBadge.bg} ${confidenceBadge.text} px-1.5 py-0.5 rounded flex-shrink-0`} title={t('ruleCard.confidenceTooltip', { score: Math.round(confidence) })}>
                 {Math.round(confidence)}% {confidenceBadge.label}
               </span>
             )}
-            {rule._passiveTaxes?.some(t => t._stUpstream) && (
-              <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded flex-shrink-0" title="ICMS-ST ja recolhido pelo fornecedor. Informativo — nao vira regra.">
-                ST upstream
+            {rule._passiveTaxes?.some(pt => pt._stUpstream) && (
+              <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded flex-shrink-0" title={t('ruleCard.stUpstreamTooltip')}>
+                {t('ruleCard.stUpstream')}
               </span>
             )}
             {rule._reducaoBCStats && (
@@ -728,9 +744,9 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
                     ? 'bg-blue-100 text-blue-700'
                     : 'bg-amber-100 text-amber-700'
                 }`}
-                title="Reducao calculada (nao oficial). Conferir com legislacao."
+                title={t('ruleCard.reductionTooltip')}
               >
-                Reducao ~{rule._reducaoBCStats.mean}%{rule._reducaoBCStats.confidence !== 'high' ? ' (verificar)' : ''}
+                Reducao ~{rule._reducaoBCStats.mean}%{rule._reducaoBCStats.confidence !== 'high' ? ` ${t('ruleCard.reductionVerify')}` : ''}
               </span>
             )}
           </div>
@@ -739,18 +755,18 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
             <span>{rule.ufEmissor} → {rule.ufDestinatario}</span>
             {rule.ruleStats ? (
               <>
-                <span>{rule.ruleStats.items} itens</span>
-                <span>{rule.ruleStats.documents}{rule.ruleStats.documentsApprox ? '+' : ''} docs</span>
-                {rule.ruleStats.uniqueNCM > 0 && <span>{rule.ruleStats.uniqueNCM} NCMs</span>}
+                <span>{rule.ruleStats.items} {t('ruleCard.items')}</span>
+                <span>{rule.ruleStats.documents}{rule.ruleStats.documentsApprox ? '+' : ''} {t('ruleCard.docs')}</span>
+                {rule.ruleStats.uniqueNCM > 0 && <span>{rule.ruleStats.uniqueNCM} {t('ruleCard.ncms')}</span>}
               </>
             ) : (
-              <span>{rule._nfeCount} ocorrencia{rule._nfeCount > 1 ? 's' : ''}</span>
+              <span>{t('ruleCard.occurrences', { count: rule._nfeCount, plural: rule._nfeCount > 1 ? 's' : '' })}</span>
             )}
-            <span>{dets.length} imposto{dets.length > 1 ? 's' : ''}</span>
+            <span>{t('ruleCard.taxes', { count: dets.length, plural: dets.length > 1 ? 's' : '' })}</span>
             {hasEvidence && rule.evidence.uniqueSuppliers > 0 && (
               <span className="flex items-center gap-0.5">
                 <Users className="w-3 h-3" />
-                {rule.evidence.uniqueSuppliers} fornecedor{rule.evidence.uniqueSuppliers > 1 ? 'es' : ''}
+                {t('ruleCard.suppliers', { count: rule.evidence.uniqueSuppliers, plural: rule.evidence.uniqueSuppliers > 1 ? 'es' : '' })}
               </span>
             )}
             {hasEvidence && rule.evidence.firstSeen && (
@@ -765,7 +781,7 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
         <button
           onClick={(e) => { e.stopPropagation(); onRemoveRule(); }}
           className="text-ocean-60 hover:text-rose flex-shrink-0 p-1"
-          title="Remover regra"
+          title={t('ruleCard.removeRule')}
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -779,14 +795,14 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
             <div className="bg-orange-50 border border-orange-200 rounded p-2 space-y-1">
               <p className="text-xs font-medium text-orange-700 flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3" />
-                Conflitos detectados
+                {t('ruleCard.conflictsDetected')}
               </p>
               {rule.conflicts.map((conflict, ci) => (
                 <div key={ci} className="text-xs text-orange-600">
                   <span className="font-medium">{conflict.taxType}:</span>
                   {conflict.conflictType === 'passive_active' ? (
                     <span className="ml-1">
-                      {conflict.detail?.passive || 0} itens passivos vs {conflict.detail?.active || 0} ativos
+                      {t('ruleCard.passiveVsActive', { passive: conflict.detail?.passive || 0, active: conflict.detail?.active || 0 })}
                     </span>
                   ) : conflict.signatures ? (
                     conflict.signatures.slice(0, 3).map((sig, si) => (
@@ -811,7 +827,7 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
                 className="text-xs text-ocean-120 hover:text-ocean-180 flex items-center gap-1"
               >
                 <BarChart3 className="w-3 h-3" />
-                {sigExpanded ? 'Ocultar assinaturas' : `Ver assinaturas (${rule.signatureSummary.length})`}
+                {sigExpanded ? t('ruleCard.hideSignatures') : t('ruleCard.viewSignatures', { count: rule.signatureSummary.length })}
               </button>
               {sigExpanded && (
                 <div className="mt-1 space-y-1">
@@ -825,10 +841,10 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
                       </div>
                       <span className="text-ocean-150 whitespace-nowrap">
                         {sig.percent}% ({sig.count}x)
-                        {sig.isMain && <span className="ml-1 text-ocean-120 font-medium">principal</span>}
+                        {sig.isMain && <span className="ml-1 text-ocean-120 font-medium">{t('ruleCard.main')}</span>}
                       </span>
                       <span className="text-ocean-60 truncate" title={sig.signature}>
-                        {sig.taxes.map(t => `${t.type} ${t.cst} ${t.aliq}%`).join(', ')}
+                        {sig.taxes.map(tax => `${tax.type} ${tax.cst} ${tax.aliq}%`).join(', ')}
                       </span>
                     </div>
                   ))}
@@ -845,18 +861,18 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
                 className="text-xs text-ocean-120 hover:text-ocean-180 flex items-center gap-1"
               >
                 <FileText className="w-3 h-3" />
-                {clusterExpanded ? 'Ocultar NCMs' : `Ver NCMs (${rule.ncmClusters.length})`}
+                {clusterExpanded ? t('ruleCard.hideNcms') : t('ruleCard.viewNcms', { count: rule.ncmClusters.length })}
               </button>
               {clusterExpanded && (
                 <div className="mt-1 overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="text-ocean-60 border-b border-ocean-30">
-                        <th className="text-left py-1 pr-2">NCM</th>
-                        <th className="text-right py-1 px-2">Itens</th>
-                        <th className="text-right py-1 px-2">Valor</th>
-                        <th className="text-right py-1 px-2">Dominante</th>
-                        <th className="text-center py-1 pl-2">Status</th>
+                        <th className="text-left py-1 pr-2">{t('ruleCard.ncmHeader')}</th>
+                        <th className="text-right py-1 px-2">{t('ruleCard.itemsHeader')}</th>
+                        <th className="text-right py-1 px-2">{t('ruleCard.valueHeader')}</th>
+                        <th className="text-right py-1 px-2">{t('ruleCard.dominantHeader')}</th>
+                        <th className="text-center py-1 pl-2">{t('ruleCard.statusHeader')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -868,15 +884,15 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
                           <td className="text-right py-1 px-2 text-ocean-150">{cl.dominantPercent}%</td>
                           <td className="text-center py-1 pl-2">
                             {cl.hasConflict
-                              ? <span className="text-orange-600">diverge</span>
-                              : <span className="text-emerald-600">ok</span>}
+                              ? <span className="text-orange-600">{t('ruleCard.diverges')}</span>
+                              : <span className="text-emerald-600">{t('ruleCard.ok')}</span>}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                   {rule.ncmClusters.length > 20 && (
-                    <p className="text-xs text-ocean-60 mt-1">+ {rule.ncmClusters.length - 20} NCMs ocultos</p>
+                    <p className="text-xs text-ocean-60 mt-1">{t('ruleCard.hiddenNcms', { count: rule.ncmClusters.length - 20 })}</p>
                   )}
                 </div>
               )}
@@ -891,16 +907,16 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
                 className="text-xs text-ocean-120 hover:text-ocean-180 flex items-center gap-1"
               >
                 <BarChart3 className="w-3 h-3" />
-                {evidenceExpanded ? 'Ocultar evidencia' : 'Ver evidencia'}
+                {evidenceExpanded ? t('ruleCard.hideEvidence') : t('ruleCard.viewEvidence')}
               </button>
               {evidenceExpanded && (
                 <div className="mt-1 text-xs text-ocean-150 space-y-0.5 bg-ocean-10 rounded p-2">
-                  <p>{rule.evidence.itemCount} itens | {rule.evidence.uniqueSuppliers} fornecedores</p>
+                  <p>{t('ruleCard.evidenceItems', { items: rule.evidence.itemCount, suppliers: rule.evidence.uniqueSuppliers })}</p>
                   {rule.evidence.firstSeen && (
-                    <p>Periodo: {rule.evidence.firstSeen} a {rule.evidence.lastSeen}</p>
+                    <p>{t('ruleCard.evidencePeriod', { from: rule.evidence.firstSeen, to: rule.evidence.lastSeen })}</p>
                   )}
                   {rule.evidence.sampleDocs && rule.evidence.sampleDocs.length > 0 && (
-                    <p>Docs exemplo: {rule.evidence.sampleDocs.slice(0, 5).join(', ')}</p>
+                    <p>{t('ruleCard.evidenceSampleDocs')}: {rule.evidence.sampleDocs.slice(0, 5).join(', ')}</p>
                   )}
                 </div>
               )}
@@ -910,18 +926,18 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
           {/* Campos editaveis da regra */}
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs text-ocean-60 mb-0.5">Regime Emissor</label>
+              <label className="block text-xs text-ocean-60 mb-0.5">{t('ruleCard.regimeEmissor')}</label>
               <select
                 value={rule.regimeEmissor}
                 onChange={(e) => onUpdateRule('regimeEmissor', e.target.value)}
                 className="w-full px-2 py-1 border border-ocean-30 rounded text-xs focus:outline-none focus:ring-1 focus:ring-ocean-120"
               >
-                <option value="">(sem regime)</option>
+                <option value="">{t('ruleCard.noRegime')}</option>
                 {REGIMES.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-ocean-60 mb-0.5">Regime Destinatario</label>
+              <label className="block text-xs text-ocean-60 mb-0.5">{t('ruleCard.regimeDestinatario')}</label>
               <select
                 value={rule.regimeDestinatario}
                 onChange={(e) => onUpdateRule('regimeDestinatario', e.target.value)}
@@ -935,7 +951,7 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
           {/* NCM (se excecao) */}
           {rule.ncm && (
             <div>
-              <label className="block text-xs text-ocean-60 mb-0.5">NCM (Codigo do Item)</label>
+              <label className="block text-xs text-ocean-60 mb-0.5">{t('ruleCard.ncmItemCode')}</label>
               <input
                 type="text"
                 value={rule.ncm}
@@ -948,13 +964,13 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
           {/* Tabela de determinacoes */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <p className="text-xs font-medium text-ocean-150">Impostos</p>
+              <p className="text-xs font-medium text-ocean-150">{t('ruleCard.taxesLabel')}</p>
               <button
                 onClick={onAddDet}
                 className="text-xs text-ocean-120 hover:text-ocean-180 flex items-center gap-0.5"
               >
                 <Plus className="w-3 h-3" />
-                Adicionar
+                {t('ruleCard.addTax')}
               </button>
             </div>
 
@@ -962,12 +978,12 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-ocean-10">
-                    <th className="text-left px-2 py-1 text-ocean-150 font-medium">Imposto</th>
-                    <th className="text-left px-2 py-1 text-ocean-150 font-medium">Aliq %</th>
+                    <th className="text-left px-2 py-1 text-ocean-150 font-medium">{t('ruleCard.taxHeader')}</th>
+                    <th className="text-left px-2 py-1 text-ocean-150 font-medium">{t('ruleCard.rateHeader')}</th>
                     {hasReformData && (
-                      <th className="text-left px-2 py-1 text-ocean-150 font-medium">cClassTrib</th>
+                      <th className="text-left px-2 py-1 text-ocean-150 font-medium">{t('ruleCard.cClassTribHeader')}</th>
                     )}
-                    <th className="text-left px-2 py-1 text-ocean-150 font-medium">CST/Tipo Parametro</th>
+                    <th className="text-left px-2 py-1 text-ocean-150 font-medium">{t('ruleCard.cstParamTypeHeader')}</th>
                     <th className="w-6"></th>
                   </tr>
                 </thead>
@@ -1005,7 +1021,7 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
                           onChange={(e) => onUpdateDet(det.externalId, 'tipoParametro', e.target.value)}
                           className="w-full px-1 py-0.5 border border-ocean-30 rounded text-xs focus:outline-none focus:ring-1 focus:ring-ocean-120"
                         >
-                          <option value="">(nenhum)</option>
+                          <option value="">{t('ruleCard.none')}</option>
                           {paramTypeOptions.map(pt => (
                             <option key={pt} value={pt}>{pt}</option>
                           ))}
@@ -1032,7 +1048,7 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
           {/* M2: Rodape-guia */}
           <div className="bg-slate-50 border border-slate-200 text-slate-500 text-xs p-2 rounded mt-3 flex items-start gap-1.5">
             <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-            <span>O sistema nao cria regras automaticamente. Ele mostra como as notas foram tributadas para ajudar o consultor a definir a regra correta.</span>
+            <span>{t('ruleCard.systemNote')}</span>
           </div>
         </div>
       )}
@@ -1043,6 +1059,7 @@ function RuleCard({ rule, dets, onUpdateRule, onUpdateDet, onRemoveRule, onRemov
 // ── AI Review Panel ───────────────────────────────────────────────────────
 
 function AIReviewPanel({ aiAnalysis, analyzing, analyzeError, onApplyPatch }) {
+  const { t } = useTranslation('tax');
   const [expandedSection, setExpandedSection] = useState(null);
   const [appliedPatches, setAppliedPatches] = useState(new Set());
 
@@ -1070,27 +1087,27 @@ function AIReviewPanel({ aiAnalysis, analyzing, analyzeError, onApplyPatch }) {
       <div className="bg-ocean-10 px-3 py-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BarChart3 className="w-4 h-4 text-ocean-150" />
-          <span className="text-sm font-medium text-ocean-180">Analise de Consistencia</span>
+          <span className="text-sm font-medium text-ocean-180">{t('aiReview.title')}</span>
         </div>
         {analyzing && (
           <span className="flex items-center gap-1 text-xs text-ocean-100">
             <Loader2 className="w-3 h-3 animate-spin" />
-            Analisando...
+            {t('aiReview.analyzing')}
           </span>
         )}
         {aiAnalysis?.fromCache && (
-          <span className="text-xs text-ocean-60">(cache)</span>
+          <span className="text-xs text-ocean-60">{t('aiReview.cache')}</span>
         )}
         {aiAnalysis?.skippedAI && (
           <span className="text-xs text-ocean-60">
-            {aiAnalysis.skippedAI === 'below_threshold' ? '(dataset pequeno — sem IA)' : '(sem API key)'}
+            {aiAnalysis.skippedAI === 'below_threshold' ? t('aiReview.belowThreshold') : t('aiReview.noApiKey')}
           </span>
         )}
       </div>
 
       {analyzeError && (
         <div className="px-3 py-2 bg-rose/10 text-xs text-rose">
-          Erro na analise: {analyzeError}
+          {t('aiReview.analysisError')}: {analyzeError}
         </div>
       )}
 
@@ -1105,7 +1122,7 @@ function AIReviewPanel({ aiAnalysis, analyzing, analyzeError, onApplyPatch }) {
               >
                 <span className="flex items-center gap-1.5">
                   <CheckCircle className="w-3.5 h-3.5 text-pine" />
-                  <span className="font-medium text-ocean-150">{autoApplies.length} correcoes automaticas</span>
+                  <span className="font-medium text-ocean-150">{t('aiReview.autoCorrections', { count: autoApplies.length })}</span>
                 </span>
                 {expandedSection === 'auto' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
               </button>
@@ -1131,7 +1148,7 @@ function AIReviewPanel({ aiAnalysis, analyzing, analyzeError, onApplyPatch }) {
               >
                 <span className="flex items-center gap-1.5">
                   <AlertCircle className="w-3.5 h-3.5 text-rose" />
-                  <span className="font-medium text-rose">{errors.length} erros de constraint</span>
+                  <span className="font-medium text-rose">{t('aiReview.constraintErrors', { count: errors.length })}</span>
                 </span>
                 {expandedSection === 'errors' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
               </button>
@@ -1156,7 +1173,7 @@ function AIReviewPanel({ aiAnalysis, analyzing, analyzeError, onApplyPatch }) {
               >
                 <span className="flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="font-medium text-ocean-150">{aiIssues.length} observacoes da IA</span>
+                  <span className="font-medium text-ocean-150">{t('aiReview.aiObservations', { count: aiIssues.length })}</span>
                 </span>
                 {expandedSection === 'issues' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
               </button>
@@ -1190,7 +1207,7 @@ function AIReviewPanel({ aiAnalysis, analyzing, analyzeError, onApplyPatch }) {
               >
                 <span className="flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="font-medium text-ocean-150">{aiPatches.length} sugestoes de correcao</span>
+                  <span className="font-medium text-ocean-150">{t('aiReview.correctionSuggestions', { count: aiPatches.length })}</span>
                 </span>
                 {expandedSection === 'patches' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
               </button>
@@ -1212,13 +1229,13 @@ function AIReviewPanel({ aiAnalysis, analyzing, analyzeError, onApplyPatch }) {
                             {patch.risk}
                           </span>
                           {appliedPatches.has(patch.id) ? (
-                            <span className="text-pine font-medium">Aplicado</span>
+                            <span className="text-pine font-medium">{t('aiReview.applied')}</span>
                           ) : (
                             <button
                               onClick={() => handleApply(patch)}
                               className="px-2 py-0.5 bg-blue-600 text-white rounded hover:bg-blue-700"
                             >
-                              Aplicar
+                              {t('aiReview.apply')}
                             </button>
                           )}
                         </div>
@@ -1242,7 +1259,7 @@ function AIReviewPanel({ aiAnalysis, analyzing, analyzeError, onApplyPatch }) {
               >
                 <span className="flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="font-medium text-ocean-150">{warnings.length} avisos</span>
+                  <span className="font-medium text-ocean-150">{t('aiReview.warnings', { count: warnings.length })}</span>
                 </span>
                 {expandedSection === 'warnings' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
               </button>
@@ -1266,6 +1283,7 @@ function AIReviewPanel({ aiAnalysis, analyzing, analyzeError, onApplyPatch }) {
 // ── RuleAlertCards — alertas inline para RuleCard ────────────────────────────
 
 function RuleAlertCards({ rule, dets }) {
+  const { t } = useTranslation('tax');
   const alerts = buildRuleAlerts(rule, dets);
   const [showAll, setShowAll] = useState(false);
 
@@ -1278,7 +1296,7 @@ function RuleAlertCards({ rule, dets }) {
     <div className="space-y-1.5">
       <p className="text-xs font-medium text-ocean-150 flex items-center gap-1">
         <AlertTriangle className="w-3 h-3 text-amber-500" />
-        Alertas desta regra ({alerts.length})
+        {t('ruleAlerts.alertsTitle', { count: alerts.length })}
       </p>
       {visible.map((alert, i) => {
         const w = translateWarning(alert.reason, alert.meta);
@@ -1288,13 +1306,14 @@ function RuleAlertCards({ rule, dets }) {
         <button
           onClick={() => setShowAll(true)}
           className="text-xs text-ocean-120 hover:text-ocean-180"
-        >+ {hidden} alerta(s) oculto(s)</button>
+        >{t('ruleAlerts.hiddenAlerts', { count: hidden })}</button>
       )}
     </div>
   );
 }
 
 function AlertCard({ warning }) {
+  const { t } = useTranslation('tax');
   const [expanded, setExpanded] = useState(false);
 
   const sevColor = warning.severity === 'ERROR'
@@ -1320,11 +1339,11 @@ function AlertCard({ warning }) {
           <button
             onClick={() => setExpanded(!expanded)}
             className="text-xs text-ocean-120 hover:text-ocean-180 mt-0.5"
-          >{expanded ? 'Menos' : 'O que fazer?'}</button>
+          >{expanded ? t('ruleAlerts.less') : t('ruleAlerts.whatToDo')}</button>
           {expanded && (
             <div className="text-xs text-ocean-100 mt-1 space-y-0.5">
-              {warning.impact && <p><span className="font-medium">Impacto:</span> {warning.impact}</p>}
-              {warning.action && <p><span className="font-medium">Acao:</span> {warning.action}</p>}
+              {warning.impact && <p><span className="font-medium">{t('ruleAlerts.impact')}</span> {warning.impact}</p>}
+              {warning.action && <p><span className="font-medium">{t('ruleAlerts.action')}</span> {warning.action}</p>}
             </div>
           )}
         </>
@@ -1334,6 +1353,7 @@ function AlertCard({ warning }) {
 }
 
 function StepReview({ rules, setRules, determinations, setDeterminations, items, setItems, stats, onBack, onExport, paramTypeOptions, aiAnalysis, analyzing, analyzeError, onApplyPatch, aiEnabled, onToggleAi, onRunAnalysis, hasApiKey, needsReview, source, originalFiles, config }) {
+  const { t } = useTranslation('tax');
   const [rawViewerOpen, setRawViewerOpen] = useState(false);
   function updateRule(ruleExtId, field, value) {
     setRules(prev => prev.map(r =>
@@ -1385,7 +1405,7 @@ function StepReview({ rules, setRules, determinations, setDeterminations, items,
             className="flex items-center gap-1.5 px-3 py-1 text-xs text-ocean-120 hover:text-ocean-180 border border-ocean-30 rounded-md hover:border-ocean-60 transition-colors"
           >
             <FileText className="w-3.5 h-3.5" />
-            Arquivo Original
+            {t('stepReview.originalFile')}
           </button>
         </div>
       )}
@@ -1416,7 +1436,7 @@ function StepReview({ rules, setRules, determinations, setDeterminations, items,
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-ocean-30 text-ocean-150 rounded-md text-sm font-medium hover:bg-ocean-10"
         >
           <ArrowLeft className="w-4 h-4" />
-          Voltar
+          {t('stepReview.back')}
         </button>
         <button
           onClick={onExport}
@@ -1424,7 +1444,7 @@ function StepReview({ rules, setRules, determinations, setDeterminations, items,
           className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-ocean-120 text-white rounded-md text-sm font-medium hover:bg-ocean-150 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ArrowRight className="w-4 h-4" />
-          Exportar
+          {t('stepReview.export')}
         </button>
       </div>
     </div>
@@ -1442,6 +1462,7 @@ function isValidCClassTribUI(raw) {
 }
 
 function StepExport({ rules, determinations, stats, onBack, lookupsStatus, reformReadiness }) {
+  const { t } = useTranslation('tax');
   const [exported, setExported] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
@@ -1550,24 +1571,24 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
       <div className="bg-white rounded-lg border border-ocean-30 p-4 space-y-3">
         <div className="flex items-center gap-2">
           <FileSpreadsheet className="w-5 h-5 text-ocean-120" />
-          <h3 className="text-sm font-medium text-ocean-180">Resumo da Exportacao</h3>
+          <h3 className="text-sm font-medium text-ocean-180">{t('stepCreate.exportSummaryTitle')}</h3>
         </div>
 
         <div className="space-y-1.5 text-sm">
           <div className="flex justify-between text-ocean-150">
-            <span>Regras de Impostos</span>
+            <span>{t('stepCreate.taxRules')}</span>
             <span className="font-medium text-ocean-180">{rules.length}</span>
           </div>
           <div className="flex justify-between text-ocean-150">
-            <span>Determinacoes</span>
+            <span>{t('stepCreate.determinations')}</span>
             <span className="font-medium text-ocean-180">{determinations.length}</span>
           </div>
           <div className="flex justify-between text-ocean-150">
-            <span>Regras genericas</span>
+            <span>{t('stepCreate.genericRules')}</span>
             <span className="font-medium text-ocean-180">{rules.filter(r => !r._isException).length}</span>
           </div>
           <div className="flex justify-between text-ocean-150">
-            <span>Excecoes por NCM</span>
+            <span>{t('stepCreate.ncmExceptions')}</span>
             <span className="font-medium text-golden">{rules.filter(r => r._isException).length}</span>
           </div>
         </div>
@@ -1576,29 +1597,27 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
       {/* Avisos CBS/IBS contextuais */}
       {hasReformData && lookupsStatus !== 'ready' && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-          <p className="font-medium">Lookups do NetSuite nao carregaram</p>
+          <p className="font-medium">{t('stepCreate.lookupsNotLoaded')}</p>
           <p className="mt-1">
-            Param Types CBS/IBS podem estar com nomes incompletos.
-            Volte a tela de upload e aguarde o carregamento antes de reprocessar.
+            {t('stepCreate.lookupsNotLoadedDetail')}
           </p>
         </div>
       )}
 
       {hasReformData && lookupsStatus === 'ready' && reformReadiness && (reformReadiness.cClassTribParamTypes || []).length === 0 && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">
-          <p className="font-medium">Ambiente sem Param Types de reforma (cClassTrib)</p>
+          <p className="font-medium">{t('stepCreate.noReformParamTypes')}</p>
           <p className="mt-1">
-            Nenhum param type cClassTrib encontrado na tabela CUSTOMRECORD_FTE_PARAMTYPE.
-            Determinacoes CBS/IBS serao ignoradas na importacao.
+            {t('stepCreate.noReformParamTypesDetail')}
           </p>
         </div>
       )}
 
       {hasReformData && lookupsStatus === 'ready' && hasUnresolvedParams && (reformReadiness?.cClassTribParamTypes || []).length > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-          <p className="font-medium">Alguns Param Types CBS/IBS nao foram reconhecidos</p>
+          <p className="font-medium">{t('stepCreate.someParamTypesUnrecognized')}</p>
           <p className="mt-1">
-            Verifique se os codigos cClassTrib das determinacoes existem no ambiente NetSuite.
+            {t('stepCreate.someParamTypesUnrecognizedDetail')}
           </p>
         </div>
       )}
@@ -1608,15 +1627,14 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
         <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
             <AlertTriangle className="w-4 h-4" />
-            {unresolvedDets.length} determinacao(es) sem tipo de parametro resolvido
+            {t('stepCreate.unresolvedDets', { count: unresolvedDets.length })}
           </div>
           <div className="text-xs text-amber-700 space-y-2">
             {unresolvedByReason.no_param_types_loaded && (
               <div className="flex items-start gap-1.5">
                 <span className="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-amber-500" />
                 <span>
-                  <strong>{unresolvedByReason.no_param_types_loaded.count}</strong> det(s) nao validadas — dados FTE do NetSuite nao carregaram.
-                  Volte e aguarde o carregamento dos Param Types.
+                  {t('stepCreate.noParamTypesLoaded', { count: unresolvedByReason.no_param_types_loaded.count })}
                 </span>
               </div>
             )}
@@ -1624,8 +1642,7 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
               <div className="flex items-start gap-1.5">
                 <span className="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-amber-500" />
                 <span>
-                  <strong>{unresolvedByReason.no_env_match.count}</strong> det(s) com sugestao nao encontrada no ambiente.
-                  Verifique CUSTOMRECORD_FTE_PARAMTYPE.
+                  {t('stepCreate.noEnvMatch', { count: unresolvedByReason.no_env_match.count })}
                 </span>
               </div>
             )}
@@ -1633,16 +1650,15 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
               <div className="flex items-start gap-1.5">
                 <span className="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-red-500" />
                 <span>
-                  <strong>{unresolvedByReason.no_suggestion.count}</strong> det(s) sem mapeamento CST → ParamType.
-                  Requer selecao manual.
+                  {t('stepCreate.noSuggestion', { count: unresolvedByReason.no_suggestion.count })}
                 </span>
               </div>
             )}
           </div>
           {withSuggestionCount > 0 && (
             <p className="text-xs text-amber-600">
-              {withSuggestionCount} det(s) com sugestao serao enviadas ao RESTlet (tentativa 3-step).
-              {emptyParamCount > 0 && ` ${emptyParamCount} det(s) sem sugestao serao puladas.`}
+              {t('stepCreate.detsWithSuggestion', { count: withSuggestionCount })}
+              {emptyParamCount > 0 && ` ${t('stepCreate.detsWithoutSuggestion', { count: emptyParamCount })}`}
             </p>
           )}
           <label className="flex items-center gap-2 text-xs text-amber-800 pt-1 border-t border-amber-200">
@@ -1652,7 +1668,7 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
               onChange={(e) => setAllowIncomplete(e.target.checked)}
               className="rounded border-amber-400"
             />
-            Criar mesmo assim{emptyParamCount > 0 ? ` — ${emptyParamCount} det(s) sem sugestao serao puladas` : ''}
+            {emptyParamCount > 0 ? t('stepCreate.createAnywaySkip', { count: emptyParamCount }) : t('stepCreate.createAnyway')}
           </label>
         </div>
       )}
@@ -1670,10 +1686,10 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
             <Upload className="w-4 h-4" />
           )}
           {importing
-            ? `Importando ${rules.length} regras + ${(allowIncomplete ? determinations.length - emptyParamCount : determinations.length)} determinacoes...`
+            ? t('stepCreate.importing', { rules: rules.length, dets: allowIncomplete ? determinations.length - emptyParamCount : determinations.length })
             : hasUnresolvedParams && !allowIncomplete
-              ? 'Corrija as determinacoes antes de importar'
-              : 'Importar para NetSuite'
+              ? t('stepCreate.fixBeforeImport')
+              : t('stepCreate.importToNetSuite')
           }
         </button>
       </div>
@@ -1697,43 +1713,43 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
               {isFullSuccess ? (
                 <>
                   <CheckCircle className="w-4 h-4 text-pine" />
-                  <span className="text-pine">Importado com sucesso!</span>
+                  <span className="text-pine">{t('stepCreate.importSuccess')}</span>
                 </>
               ) : isPartial ? (
                 <>
                   <AlertTriangle className="w-4 h-4 text-amber-600" />
-                  <span className="text-amber-700">Importacao parcial — {importResult.errors.length} erro(s)</span>
+                  <span className="text-amber-700">{t('stepCreate.partialImport', { count: importResult.errors.length })}</span>
                 </>
               ) : (
                 <>
                   <AlertCircle className="w-4 h-4 text-rose" />
-                  <span className="text-rose">Importacao com erros</span>
+                  <span className="text-rose">{t('stepCreate.importWithErrors')}</span>
                 </>
               )}
             </div>
 
             <div className="text-xs space-y-0.5">
               {importResult.rulesCreated !== undefined && (
-                <p className="text-ocean-150">Regras criadas: <span className="font-medium">{importResult.rulesCreated}</span></p>
+                <p className="text-ocean-150">{t('stepCreate.rulesCreated')}: <span className="font-medium">{importResult.rulesCreated}</span></p>
               )}
               {importResult.determinationsCreated !== undefined && (
-                <p className="text-ocean-150">Determinacoes criadas: <span className="font-medium">{importResult.determinationsCreated}</span></p>
+                <p className="text-ocean-150">{t('stepCreate.determinationsCreated')}: <span className="font-medium">{importResult.determinationsCreated}</span></p>
               )}
               {allowIncomplete && unresolvedDets.length > 0 && (
-                <p className="text-amber-600">Determinacoes puladas (sem tipoParametro): <span className="font-medium">{unresolvedDets.length}</span></p>
+                <p className="text-amber-600">{t('stepCreate.detsSkipped')}: <span className="font-medium">{unresolvedDets.length}</span></p>
               )}
             </div>
 
             {hasErrors && (
               <div className="space-y-1 mt-1">
-                <p className="text-xs font-medium text-rose">Erros ({importResult.errors.length}):</p>
+                <p className="text-xs font-medium text-rose">{t('stepCreate.errors', { count: importResult.errors.length })}</p>
                 {importResult.errors.slice(0, 10).map((err, i) => (
                   <p key={i} className="text-xs text-red-600">
                     [{err.type || 'geral'}] {err.externalId ? `#${err.externalId}: ` : ''}{err.error}
                   </p>
                 ))}
                 {importResult.errors.length > 10 && (
-                  <p className="text-xs text-red-400">... e mais {importResult.errors.length - 10} erro(s)</p>
+                  <p className="text-xs text-red-400">{t('stepCreate.moreErrors', { count: importResult.errors.length - 10 })}</p>
                 )}
               </div>
             )}
@@ -1744,7 +1760,7 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
       {/* Separador */}
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-ocean-30" />
-        <span className="text-xs text-ocean-60">ou exporte arquivo</span>
+        <span className="text-xs text-ocean-60">{t('stepCreate.orExportFile')}</span>
         <div className="flex-1 h-px bg-ocean-30" />
       </div>
 
@@ -1755,7 +1771,7 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
           className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-ocean-120 text-white rounded-md text-sm font-medium hover:bg-ocean-150"
         >
           <Download className="w-4 h-4" />
-          Exportar XLSX (Template 160)
+          {t('stepCreate.exportXlsx')}
         </button>
 
         <button
@@ -1763,14 +1779,14 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
           className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-ocean-30 text-ocean-150 rounded-md text-sm font-medium hover:bg-ocean-10"
         >
           <FileText className="w-4 h-4" />
-          Exportar CSVs separados
+          {t('stepCreate.exportCsv')}
         </button>
       </div>
 
       {exported && (
         <div className="flex items-center gap-2 text-pine text-sm">
           <CheckCircle className="w-4 h-4" />
-          <span>Arquivo exportado com sucesso!</span>
+          <span>{t('stepCreate.fileExported')}</span>
         </div>
       )}
 
@@ -1779,7 +1795,7 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
         className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-ocean-30 text-ocean-150 rounded-md text-sm font-medium hover:bg-ocean-10"
       >
         <ArrowLeft className="w-4 h-4" />
-        Voltar para revisao
+        {t('stepCreate.backToReview')}
       </button>
     </div>
   );
@@ -1788,6 +1804,7 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
 // ── Pagina principal ────────────────────────────────────────────────────────
 
 export default function TaxRules() {
+  const { t } = useTranslation('tax');
   const navigate = useNavigate();
   const [step, setStep] = useState('upload'); // 'upload' | 'review' | 'export'
   const [source, setSource] = useState('xml'); // 'xml' | 'sped'
@@ -1830,7 +1847,7 @@ export default function TaxRules() {
         setLookupsStatus('ready');
       } catch (err) {
         setLookupsStatus('error');
-        setLookupsError(err.message || 'Falha ao carregar dados FTE do NetSuite');
+        setLookupsError(err.message || t('main.failedFteLoad'));
       }
     }
     fetchLookups();
@@ -1975,7 +1992,7 @@ export default function TaxRules() {
         fromCache: result.fromCache || false,
       });
     } catch (err) {
-      setAnalyzeError(err.message || 'Erro na analise IA');
+      setAnalyzeError(err.message || t('main.aiAnalysisError'));
     } finally {
       setAnalyzing(false);
     }
@@ -2014,7 +2031,7 @@ export default function TaxRules() {
       if (parsed.items.length === 0) {
         setParseErrors(prev => prev.length > 0
           ? prev
-          : [{ fileName: 'Geral', errors: ['Nenhum item fiscal encontrado nos XMLs'] }]
+          : [{ fileName: 'Geral', errors: [t('main.noItemsFound')] }]
         );
         return;
       }
@@ -2079,7 +2096,7 @@ export default function TaxRules() {
 
       if (!startResp.ok) {
         const errData = await startResp.json();
-        throw new Error(errData.error || 'Erro ao iniciar processamento');
+        throw new Error(errData.error || t('main.errorStartProcessing'));
       }
 
       const { jobId } = await startResp.json();
@@ -2107,9 +2124,9 @@ export default function TaxRules() {
           setSpedProgress(null);
           try {
             const data = JSON.parse(e.data);
-            reject(new Error(data.message || 'Erro no processamento'));
+            reject(new Error(data.message || t('main.errorStartProcessing')));
           } catch {
-            reject(new Error('Conexao com o servidor perdida'));
+            reject(new Error(t('main.connectionLost')));
           }
         });
 
@@ -2117,7 +2134,7 @@ export default function TaxRules() {
           es.close();
           eventSourceRef.current = null;
           setSpedProgress(null);
-          reject(new Error('Conexao com o servidor perdida'));
+          reject(new Error(t('main.connectionLost')));
         };
       });
 
@@ -2125,7 +2142,7 @@ export default function TaxRules() {
       const resultResp = await fetch(`/api/parse-sped/result/${jobId}`);
       if (!resultResp.ok) {
         const errData = await resultResp.json();
-        throw new Error(errData.error || 'Erro ao obter resultado');
+        throw new Error(errData.error || t('main.errorGetResult'));
       }
 
       const result = await resultResp.json();
@@ -2137,7 +2154,7 @@ export default function TaxRules() {
       });
 
       if (!result.items || result.items.length === 0) {
-        setParseErrors([{ fileName: 'SPED', errors: ['Nenhum item fiscal encontrado. Verifique os arquivos e opcoes de filtro.'] }]);
+        setParseErrors([{ fileName: 'SPED', errors: [t('main.noItemsFoundSped')] }]);
         setProcessing(false);
         return;
       }
@@ -2192,9 +2209,9 @@ export default function TaxRules() {
     : PARAM_TYPES;
 
   const stepLabels = {
-    upload: source === 'sped' ? '1. Upload SPED' : '1. Upload XMLs',
-    review: '2. Revisao',
-    export: '3. Exportar',
+    upload: source === 'sped' ? t('main.stepUploadSped') : t('main.stepUploadXml'),
+    review: t('main.stepReview'),
+    export: t('main.stepExport'),
   };
 
   return (
@@ -2203,14 +2220,14 @@ export default function TaxRules() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <FileSpreadsheet className="w-5 h-5 text-ocean-150" />
-          <h2 className="text-base font-medium text-ocean-180">Regras Fiscais</h2>
+          <h2 className="text-base font-medium text-ocean-180">{t('main.title')}</h2>
         </div>
         <button
           onClick={() => navigate('/')}
           className="text-sm text-ocean-150 hover:text-ocean-180 flex items-center gap-1"
         >
           <ArrowLeft className="w-3 h-3" />
-          Inicio
+          {t('main.home')}
         </button>
       </div>
 
@@ -2225,7 +2242,7 @@ export default function TaxRules() {
                 : 'bg-white text-ocean-150 hover:bg-ocean-10'
             }`}
           >
-            NF-e XML
+            {t('main.sourceXml')}
           </button>
           <button
             onClick={() => { setSource('sped'); setFiles([]); setParseErrors([]); setSpedSummary(null); }}
@@ -2235,7 +2252,7 @@ export default function TaxRules() {
                 : 'bg-white text-ocean-150 hover:bg-ocean-10'
             }`}
           >
-            SPED Fiscal
+            {t('main.sourceSped')}
           </button>
         </div>
       )}

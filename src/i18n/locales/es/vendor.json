@@ -1,0 +1,48 @@
+{
+  "title": "Importar Proveedores",
+  "home": "Inicio",
+  "steps": {
+    "upload": "1. Carga",
+    "review": "2. Revision",
+    "import": "3. Importar"
+  },
+  "upload": {
+    "dragOrSelect": "Arrastre un archivo CSV o Excel",
+    "remove": "Eliminar",
+    "invalidFormat": "Formato invalido. Use .csv, .xls o .xlsx",
+    "fileTooLarge": "El archivo excede 50MB",
+    "config": "Configuracion",
+    "subsidiary": "Subsidiaria",
+    "loadingSubsidiaries": "Cargando subsidiarias...",
+    "selectSubsidiary": "Seleccione una subsidiaria",
+    "subsidiaryPlaceholder": "Nombre de la subsidiaria en NetSuite",
+    "processFile": "Procesar Archivo",
+    "processing": "Procesando..."
+  },
+  "review": {
+    "vendors": "proveedores",
+    "pj": "PJ",
+    "pf": "PF",
+    "withErrors": "con errores",
+    "companyName": "Razon Social",
+    "document": "CNPJ/CPF",
+    "email": "Email",
+    "phone": "Telefono",
+    "back": "Volver",
+    "import": "Importar"
+  },
+  "import": {
+    "summary": "Resumen de la Importacion",
+    "total": "Total",
+    "vendorsCreated": "proveedores creados",
+    "errors": "errores",
+    "importing": "Importando...",
+    "importToNetsuite": "Importar a NetSuite",
+    "exportCsv": "Exportar CSV",
+    "back": "Volver",
+    "line": "Linea",
+    "generalError": "Error general",
+    "andMore": "...y {{count}} errores mas",
+    "errorProcessing": "Error al procesar archivo: {{message}}"
+  }
+}

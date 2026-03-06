@@ -1,0 +1,22 @@
+{
+  "setupAssistant": "Setup Assistant",
+  "assistantTitle": "Asistente de Implementacion",
+  "nav": {
+    "home": "Inicio",
+    "settings": "Configuracion",
+    "chartOfAccounts": "Plan de Cuentas",
+    "dre": "DRE",
+    "balance": "Balance",
+    "openingBalances": "Saldos Iniciales",
+    "taxRules": "Reglas Fiscales",
+    "customers": "Clientes",
+    "vendors": "Proveedores",
+    "items": "Items"
+  },
+  "language": {
+    "label": "Idioma",
+    "pt": "PT",
+    "en": "EN",
+    "es": "ES"
+  }
+}

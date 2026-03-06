@@ -1,0 +1,37 @@
+{
+  "roadmapTitle": "Hoja de Ruta de Implementacion",
+  "stepOf": "Paso {{current}} de {{total}}",
+  "steps": {
+    "settings": {
+      "title": "Configuracion",
+      "description": "Registre las credenciales OAuth de NetSuite y la clave de Claude API para conectar el asistente.",
+      "button": "Configurar"
+    },
+    "coa": {
+      "title": "Filial & Plan de Cuentas",
+      "description": "Cree la filial en NetSuite y/o importe el plan de cuentas desde una hoja de calculo.",
+      "button": "Importar Hoja de Calculo",
+      "secondaryButton": "Crear Filial"
+    },
+    "customers": {
+      "title": "Clientes",
+      "description": "Importe el registro de clientes de la empresa desde hojas de calculo.",
+      "button": "Importar"
+    },
+    "vendors": {
+      "title": "Proveedores",
+      "description": "Importe el registro de proveedores de la empresa desde hojas de calculo.",
+      "button": "Importar"
+    },
+    "items": {
+      "title": "Items",
+      "description": "Importe el catalogo de productos y servicios de la empresa.",
+      "button": "Importar"
+    },
+    "taxRules": {
+      "title": "Reglas Fiscales",
+      "description": "Importe XMLs de NF-e para reglas de salida y archivos SPED para reglas de entrada.",
+      "button": "Generar Reglas"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "roadmapTitle": "Implementation Roadmap",
+  "stepOf": "Step {{current}} of {{total}}",
+  "steps": {
+    "settings": {
+      "title": "Settings",
+      "description": "Set up your NetSuite OAuth credentials and Claude API key to connect the assistant.",
+      "button": "Configure"
+    },
+    "coa": {
+      "title": "Subsidiary & Chart of Accounts",
+      "description": "Create the subsidiary in NetSuite and/or import the chart of accounts from a spreadsheet.",
+      "button": "Import Spreadsheet",
+      "secondaryButton": "Create Subsidiary"
+    },
+    "customers": {
+      "title": "Customers",
+      "description": "Import the company's customer records from spreadsheets.",
+      "button": "Import"
+    },
+    "vendors": {
+      "title": "Vendors",
+      "description": "Import the company's vendor records from spreadsheets.",
+      "button": "Import"
+    },
+    "items": {
+      "title": "Items",
+      "description": "Import the company's product and service catalog.",
+      "button": "Import"
+    },
+    "taxRules": {
+      "title": "Tax Rules",
+      "description": "Import NF-e XML files for output rules and SPED files for input rules.",
+      "button": "Generate Rules"
+    }
+  }
+}

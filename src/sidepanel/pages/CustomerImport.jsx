@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft, Loader2, Download, Users,
   Trash2, AlertTriangle, CheckCircle, AlertCircle, Upload,
@@ -13,16 +14,17 @@ const ACCEPTED_EXTENSIONS = ['.csv', '.xls', '.xlsx'];
 // ── Etapa 1: Upload + Config ────────────────────────────────────────────────
 
 function StepUpload({ file, setFile, config, setConfig, onProcess, processing, subsidiaries, subsLoading, entityStatuses }) {
+  const { t } = useTranslation('customer');
   const [dragOver, setDragOver] = useState(false);
   const [fileError, setFileError] = useState('');
 
   function validateFile(f) {
     const ext = '.' + f.name.split('.').pop().toLowerCase();
     if (!ACCEPTED_EXTENSIONS.includes(ext)) {
-      return 'Formato invalido. Use .csv, .xls ou .xlsx';
+      return t('upload.invalidFormat');
     }
     if (f.size > 50 * 1024 * 1024) {
-      return 'Arquivo excede 50MB';
+      return t('upload.fileTooLarge');
     }
     return null;
   }
@@ -65,7 +67,7 @@ function StepUpload({ file, setFile, config, setConfig, onProcess, processing, s
         />
         <Upload className="w-8 h-8 text-ocean-60 mx-auto mb-2" />
         <p className="text-sm text-ocean-150">
-          {file ? file.name : 'Arraste um arquivo CSV ou Excel'}
+          {file ? file.name : t('upload.dragOrSelect')}
         </p>
         {file && (
           <p className="text-xs text-ocean-60 mt-1">
@@ -74,7 +76,7 @@ function StepUpload({ file, setFile, config, setConfig, onProcess, processing, s
               onClick={(e) => { e.stopPropagation(); setFile(null); }}
               className="ml-2 text-rose hover:text-rose"
             >
-              Remover
+              {t('upload.remove')}
             </button>
           </p>
         )}
@@ -85,14 +87,14 @@ function StepUpload({ file, setFile, config, setConfig, onProcess, processing, s
 
       {/* Config */}
       <div className="bg-white rounded-lg border border-ocean-30 p-4 space-y-3">
-        <h3 className="text-sm font-medium text-ocean-150 uppercase tracking-wide">Configuracao</h3>
+        <h3 className="text-sm font-medium text-ocean-150 uppercase tracking-wide">{t('upload.config')}</h3>
 
         <div>
-          <label className="block text-sm text-ocean-150 mb-1">Subsidiaria</label>
+          <label className="block text-sm text-ocean-150 mb-1">{t('upload.subsidiary')}</label>
           {subsLoading ? (
             <div className="flex items-center gap-2 px-3 py-2 border border-ocean-30 rounded-md text-sm text-ocean-60">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Carregando subsidiarias...
+              {t('upload.loadingSubsidiaries')}
             </div>
           ) : subsidiaries.length > 0 ? (
             <select
@@ -108,7 +110,7 @@ function StepUpload({ file, setFile, config, setConfig, onProcess, processing, s
               }}
               className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             >
-              <option value="">Selecione uma subsidiaria</option>
+              <option value="">{t('upload.selectSubsidiary')}</option>
               {subsidiaries.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
@@ -118,21 +120,21 @@ function StepUpload({ file, setFile, config, setConfig, onProcess, processing, s
               type="text"
               value={config.subsidiaryName}
               onChange={(e) => setConfig((c) => ({ ...c, subsidiaryName: e.target.value }))}
-              placeholder="Nome da subsidiaria no NetSuite"
+              placeholder={t('upload.subsidiaryPlaceholder')}
               className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             />
           )}
         </div>
 
         <div>
-          <label className="block text-sm text-ocean-150 mb-1">Status do Cliente</label>
+          <label className="block text-sm text-ocean-150 mb-1">{t('upload.customerStatus')}</label>
           {entityStatuses.length > 0 ? (
             <select
               value={config.entityStatusId}
               onChange={(e) => setConfig((c) => ({ ...c, entityStatusId: e.target.value }))}
               className="w-full px-3 py-2 border border-ocean-30 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ocean-120 focus:border-transparent"
             >
-              <option value="">Selecione um status</option>
+              <option value="">{t('upload.selectStatus')}</option>
               {entityStatuses.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
@@ -158,10 +160,10 @@ function StepUpload({ file, setFile, config, setConfig, onProcess, processing, s
         {processing ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            Processando...
+            {t('upload.processing')}
           </>
         ) : (
-          'Processar Arquivo'
+          t('upload.processFile')
         )}
       </button>
     </div>
@@ -171,6 +173,7 @@ function StepUpload({ file, setFile, config, setConfig, onProcess, processing, s
 // ── Etapa 2: Revisao ────────────────────────────────────────────────────────
 
 function StepReview({ customers, setCustomers, columnMapping, headers, onBack, onImport }) {
+  const { t } = useTranslation('customer');
   const totalPF = customers.filter((c) => c.isPerson).length;
   const totalPJ = customers.filter((c) => !c.isPerson).length;
   const withErrors = customers.filter((c) => c._errors.length > 0).length;
@@ -211,14 +214,14 @@ function StepReview({ customers, setCustomers, columnMapping, headers, onBack, o
       {/* Stats */}
       <div className="bg-white rounded-lg border border-ocean-30 p-3 flex items-center justify-between text-xs">
         <span className="text-ocean-150">
-          <strong>{customers.length}</strong> clientes
+          <strong>{customers.length}</strong> {t('review.customers')}
         </span>
-        <span className="text-ocean-120">{totalPJ} PJ</span>
-        <span className="text-ocean-120">{totalPF} PF</span>
+        <span className="text-ocean-120">{totalPJ} {t('review.pj')}</span>
+        <span className="text-ocean-120">{totalPF} {t('review.pf')}</span>
         {withErrors > 0 && (
           <span className="text-rose flex items-center gap-1">
             <AlertTriangle className="w-3 h-3" />
-            {withErrors} com erro
+            {withErrors} {t('review.withErrors')}
           </span>
         )}
       </div>
@@ -255,7 +258,7 @@ function StepReview({ customers, setCustomers, columnMapping, headers, onBack, o
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-ocean-60 mb-0.5">Razao Social</label>
+                <label className="block text-ocean-60 mb-0.5">{t('review.companyName')}</label>
                 <input
                   value={cust.companyName || ''}
                   onChange={(e) => handleEdit(idx, 'companyName', e.target.value)}
@@ -263,7 +266,7 @@ function StepReview({ customers, setCustomers, columnMapping, headers, onBack, o
                 />
               </div>
               <div>
-                <label className="block text-ocean-60 mb-0.5">CNPJ/CPF</label>
+                <label className="block text-ocean-60 mb-0.5">{t('review.document')}</label>
                 <input
                   value={cust.custentity_brl_entity_t_fed_tax_reg || ''}
                   onChange={(e) => handleEdit(idx, 'custentity_brl_entity_t_fed_tax_reg', e.target.value)}
@@ -273,7 +276,7 @@ function StepReview({ customers, setCustomers, columnMapping, headers, onBack, o
                 />
               </div>
               <div>
-                <label className="block text-ocean-60 mb-0.5">Email</label>
+                <label className="block text-ocean-60 mb-0.5">{t('review.email')}</label>
                 <input
                   value={cust.email || ''}
                   onChange={(e) => handleEdit(idx, 'email', e.target.value)}
@@ -281,7 +284,7 @@ function StepReview({ customers, setCustomers, columnMapping, headers, onBack, o
                 />
               </div>
               <div>
-                <label className="block text-ocean-60 mb-0.5">Telefone</label>
+                <label className="block text-ocean-60 mb-0.5">{t('review.phone')}</label>
                 <input
                   value={cust.phone || ''}
                   onChange={(e) => handleEdit(idx, 'phone', e.target.value)}
@@ -299,14 +302,14 @@ function StepReview({ customers, setCustomers, columnMapping, headers, onBack, o
           onClick={onBack}
           className="flex-1 py-2 border border-ocean-30 text-ocean-150 text-sm rounded-md hover:bg-ocean-10 flex items-center justify-center gap-1"
         >
-          Voltar
+          {t('review.back')}
         </button>
         <button
           onClick={onImport}
           disabled={customers.length === 0}
           className="flex-1 py-2 bg-ocean-120 text-white text-sm font-medium rounded-md hover:bg-ocean-150 disabled:opacity-50 flex items-center justify-center gap-1"
         >
-          Importar
+          {t('review.import')}
         </button>
       </div>
     </div>
@@ -316,6 +319,7 @@ function StepReview({ customers, setCustomers, columnMapping, headers, onBack, o
 // ── Etapa 3: Importacao ──────────────────────────────────────────────────────
 
 function StepImport({ customers, onBack }) {
+  const { t } = useTranslation('customer');
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState(null);
 
@@ -341,7 +345,7 @@ function StepImport({ customers, onBack }) {
       });
       setResult(res);
     } catch (err) {
-      setResult({ success: false, customersCreated: 0, errors: [{ name: 'Erro geral', error: err.message }] });
+      setResult({ success: false, customersCreated: 0, errors: [{ name: t('import.generalError'), error: err.message }] });
     } finally {
       setImporting(false);
     }
@@ -375,19 +379,19 @@ function StepImport({ customers, onBack }) {
     <div className="space-y-4">
       {/* Resumo */}
       <div className="bg-white rounded-lg border border-ocean-30 p-4">
-        <h3 className="text-sm font-medium text-ocean-150 mb-3">Resumo da Importacao</h3>
+        <h3 className="text-sm font-medium text-ocean-150 mb-3">{t('import.summary')}</h3>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="bg-ocean-10 rounded-lg p-3">
             <p className="text-lg font-bold text-ocean-180">{customers.length}</p>
-            <p className="text-[10px] text-ocean-60">Total</p>
+            <p className="text-[10px] text-ocean-60">{t('import.total')}</p>
           </div>
           <div className="bg-ocean-10 rounded-lg p-3">
             <p className="text-lg font-bold text-ocean-150">{totalPJ}</p>
-            <p className="text-[10px] text-ocean-60">PJ</p>
+            <p className="text-[10px] text-ocean-60">{t('review.pj')}</p>
           </div>
           <div className="bg-ocean-10 rounded-lg p-3">
             <p className="text-lg font-bold text-ocean-120">{totalPF}</p>
-            <p className="text-[10px] text-ocean-60">PF</p>
+            <p className="text-[10px] text-ocean-60">{t('review.pf')}</p>
           </div>
         </div>
       </div>
@@ -404,8 +408,8 @@ function StepImport({ customers, onBack }) {
               <AlertCircle className="w-5 h-5 text-rose" />
             )}
             <span className={`text-sm font-medium ${result.success ? 'text-pine' : 'text-rose'}`}>
-              {result.customersCreated || 0} clientes criados
-              {result.errors?.length > 0 && ` | ${result.errors.length} erros`}
+              {result.customersCreated || 0} {t('import.customersCreated')}
+              {result.errors?.length > 0 && ` | ${result.errors.length} ${t('import.errors')}`}
             </span>
           </div>
 
@@ -413,11 +417,11 @@ function StepImport({ customers, onBack }) {
             <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
               {result.errors.slice(0, 15).map((err, i) => (
                 <div key={i} className="text-xs text-rose bg-red-50 px-2 py-1 rounded">
-                  <strong>{err.name || 'Linha ' + err.rowIndex}:</strong> {err.error}
+                  <strong>{err.name || t('import.line') + ' ' + err.rowIndex}:</strong> {err.error}
                 </div>
               ))}
               {result.errors.length > 15 && (
-                <p className="text-xs text-rose">...e mais {result.errors.length - 15} erros</p>
+                <p className="text-xs text-rose">{t('import.andMore', { count: result.errors.length - 15 })}</p>
               )}
             </div>
           )}
@@ -435,12 +439,12 @@ function StepImport({ customers, onBack }) {
             {importing ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Importando...
+                {t('import.importing')}
               </>
             ) : (
               <>
                 <Upload className="w-4 h-4" />
-                Importar para NetSuite
+                {t('import.importToNetsuite')}
               </>
             )}
           </button>
@@ -451,14 +455,14 @@ function StepImport({ customers, onBack }) {
           className="w-full py-2 border border-ocean-30 text-ocean-150 text-sm rounded-md hover:bg-ocean-10 flex items-center justify-center gap-2"
         >
           <Download className="w-4 h-4" />
-          Exportar CSV
+          {t('import.exportCsv')}
         </button>
 
         <button
           onClick={onBack}
           className="w-full py-2 text-ocean-60 text-sm hover:text-ocean-150"
         >
-          Voltar
+          {t('import.back')}
         </button>
       </div>
     </div>
@@ -469,6 +473,7 @@ function StepImport({ customers, onBack }) {
 
 export default function CustomerImport() {
   const navigate = useNavigate();
+  const { t } = useTranslation('customer');
   const [step, setStep] = useState('upload');
 
   const [subsidiaries, setSubsidiaries] = useState([]);
@@ -536,16 +541,16 @@ export default function CustomerImport() {
       setCustomers(mapped);
       setStep('review');
     } catch (err) {
-      alert('Erro ao processar arquivo: ' + err.message);
+      alert(t('import.errorProcessing', { message: err.message }));
     } finally {
       setProcessing(false);
     }
   }
 
   const stepLabels = {
-    upload: '1. Upload',
-    review: '2. Revisao',
-    import: '3. Importar',
+    upload: t('steps.upload'),
+    review: t('steps.review'),
+    import: t('steps.import'),
   };
 
   return (
@@ -554,14 +559,14 @@ export default function CustomerImport() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Users className="w-5 h-5 text-ocean-150" />
-          <h2 className="text-base font-medium text-ocean-180">Importar Clientes</h2>
+          <h2 className="text-base font-medium text-ocean-180">{t('title')}</h2>
         </div>
         <button
           onClick={() => navigate('/')}
           className="text-sm text-ocean-150 hover:text-ocean-180 flex items-center gap-1"
         >
           <ArrowLeft className="w-3 h-3" />
-          Inicio
+          {t('home')}
         </button>
       </div>
 

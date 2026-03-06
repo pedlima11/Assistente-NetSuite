@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Home from './pages/Home.jsx';
 import Settings from './pages/Settings.jsx';
 import Upload from './pages/Upload.jsx';
@@ -12,22 +13,53 @@ import CustomerImport from './pages/CustomerImport.jsx';
 import VendorImport from './pages/VendorImport.jsx';
 import ItemImport from './pages/ItemImport.jsx';
 
-const NAV_LINKS = [
-  { label: 'Inicio', path: '/', state: null },
-  { label: 'Configuracao', path: '/settings', state: null },
-  { label: 'Plano de Contas', path: '/upload', state: { importType: 'plano-de-contas' } },
-  { label: 'DRE', path: '/upload', state: { importType: 'dre' } },
-  { label: 'Balanco', path: '/upload', state: { importType: 'balanco' } },
-  { label: 'Saldos', path: '/balance-upload', state: null },
-  { label: 'Regras Fiscais', path: '/tax-rules', state: null },
-  { label: 'Clientes', path: '/customer-import', state: null },
-  { label: 'Fornecedores', path: '/vendor-import', state: null },
-  { label: 'Itens', path: '/item-import', state: null },
+const NAV_LINK_KEYS = [
+  { key: 'nav.home', path: '/', state: null },
+  { key: 'nav.settings', path: '/settings', state: null },
+  { key: 'nav.chartOfAccounts', path: '/upload', state: { importType: 'plano-de-contas' } },
+  { key: 'nav.dre', path: '/upload', state: { importType: 'dre' } },
+  { key: 'nav.balance', path: '/upload', state: { importType: 'balanco' } },
+  { key: 'nav.openingBalances', path: '/balance-upload', state: null },
+  { key: 'nav.taxRules', path: '/tax-rules', state: null },
+  { key: 'nav.customers', path: '/customer-import', state: null },
+  { key: 'nav.vendors', path: '/vendor-import', state: null },
+  { key: 'nav.items', path: '/item-import', state: null },
 ];
+
+const LANGUAGES = [
+  { code: 'pt', label: 'PT' },
+  { code: 'en', label: 'EN' },
+  { code: 'es', label: 'ES' },
+];
+
+function LanguageSwitcher() {
+  const { i18n } = useTranslation();
+
+  return (
+    <div className="fixed top-2 right-3 z-50 flex gap-0.5 bg-white/90 backdrop-blur rounded-md shadow-sm border border-ocean-30 p-0.5">
+      {LANGUAGES.map(({ code, label }) => (
+        <button
+          key={code}
+          onClick={() => i18n.changeLanguage(code)}
+          className={`
+            px-2 py-1 text-xs font-medium rounded transition-colors cursor-pointer
+            ${i18n.language === code
+              ? 'bg-ocean-120 text-white'
+              : 'text-ocean-60 hover:text-ocean-120 hover:bg-ocean-10'
+            }
+          `}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function NavBar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   return (
     <header className="hidden">
@@ -37,19 +69,19 @@ function NavBar() {
             onClick={() => navigate('/')}
             className="text-white font-semibold text-sm mr-4 cursor-pointer hover:opacity-80 transition-opacity"
           >
-            Assistente de Implantacao
+            {t('assistantTitle')}
           </button>
         </div>
       </div>
       <nav className="bg-ocean-120 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center overflow-x-auto">
-          {NAV_LINKS.map((link) => {
+          {NAV_LINK_KEYS.map((link) => {
             const isActive = location.pathname === link.path
               && (link.state === null || location.state?.importType === link.state?.importType);
 
             return (
               <button
-                key={link.label}
+                key={link.key}
                 onClick={() => navigate(link.path, { state: link.state })}
                 className={`
                   px-4 py-2.5 text-sm whitespace-nowrap cursor-pointer transition-all border-b-2
@@ -59,7 +91,7 @@ function NavBar() {
                   }
                 `}
               >
-                {link.label}
+                {t(link.key)}
               </button>
             );
           })}
@@ -73,6 +105,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gray-50">
+        <LanguageSwitcher />
         <NavBar />
         <div className="h-1.5 bg-[#607B8B]" />
         <main className="px-6 py-6 max-w-7xl mx-auto">
