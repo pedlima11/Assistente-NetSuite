@@ -12,6 +12,7 @@ export {
   CRT_TO_REGIME,
   XML_TAG_TO_TAX_CODE,
   CST_TO_PARAM_TYPE,
+  TAX_CODE_TO_PARAM_TYPE,
   classifyCFOP,
   inferLOB,
   generateRuleName,

@@ -1532,11 +1532,10 @@ function StepExport({ rules, determinations, stats, onBack, lookupsStatus, refor
         validoAte: r.validoAte || '',
       }));
 
-      // Se allowIncomplete, pular APENAS dets sem sugestao (tipoParametro vazio)
-      // Dets com sugestao sao enviadas — RESTlet tenta 3-step (contextual → SuiteQL → cClassTrib)
-      const detsToSend = allowIncomplete
-        ? determinations.filter(d => !(d._unresolvedParam && !d.tipoParametro))
-        : determinations;
+      // Usuario autorizou criacao (allowIncomplete ou nao): envia todas as dets.
+      // RESTlet Camada 3 decide por tax code se paramType e obrigatorio
+      // (discovery > 0 opcoes) ou dispensavel (0 opcoes).
+      const detsToSend = determinations;
 
       const cleanDets = detsToSend.map(d => ({
         externalId: d.externalId,

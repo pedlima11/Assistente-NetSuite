@@ -27,6 +27,10 @@ export const XML_TAG_TO_TAX_CODE = {
   COFINS: 'COFINS_BR',
   ISS: 'ISS_BR',
   ISSQN: 'ISS_BR',
+  // Federais retidos (NFS-e)
+  IRRF: 'IRRF_BR',
+  CSLL: 'CSLL_BR',
+  INSS: 'INSS_BR',
   // Reforma tributaria (CBS/IBS/IS)
   CBS: 'CBS_2026_BR',
   IBS: 'IBS_2026_BR',
@@ -244,12 +248,13 @@ export function classifyCFOP(cfop) {
   } else if (subgroup >= 551 && subgroup <= 557) {
     operationType = direction === 'entrada' ? 'Compra' : 'Venda';
     itemCategory = 'Ativo Fixo';
+  } else if (subgroup === 933) {
+    // Prestacao/Aquisicao de servico (NFS-e) — ANTES do range 901-949
+    operationType = direction === 'entrada' ? 'Aquisicao Servico' : 'Prestacao Servico';
+    itemCategory = 'Servico';
   } else if (subgroup >= 901 && subgroup <= 949) {
     operationType = 'Remessa/Retorno';
     itemCategory = 'Outros';
-  } else if (subgroup >= 933 && subgroup <= 933) {
-    operationType = direction === 'entrada' ? 'Aquisicao Servico' : 'Prestacao Servico';
-    itemCategory = 'Servico';
   }
 
   return { direction, scope, operationType, itemCategory };
@@ -324,7 +329,48 @@ export function makeRuleKey(item, config) {
   const emitUF = (item.emitUF || '').toUpperCase();
   const destUF = (item.destUF || '').toUpperCase();
 
-  return [direction, emitUF, destUF, cfop, operationType].join('|');
+  const parts = [direction, emitUF, destUF, cfop, operationType];
+
+  // Para NFS-e: incluir campos que distinguem regras de servico
+  if (item.sourceType === 'nfse') {
+    parts.push(item.cListServ || '');
+    parts.push(item.issRetido ? 'ret' : 'nret');
+    parts.push(buildTaxProfileSignature(item.taxes || []));
+  }
+
+  return parts.join('|');
+}
+
+/**
+ * Assinatura de perfil tributario para agrupamento de NFS-e.
+ * Usa APENAS atributos de configuracao fiscal, nunca valores absolutos.
+ *
+ * Pre-processamento:
+ * - Filtra tributos sem type
+ * - Normaliza type via CANONICAL_TAX_TYPE
+ * - Deduplica entradas identicas
+ * - Ordena antes de juntar
+ *
+ * @param {Object[]} taxes
+ * @returns {string}
+ */
+export function buildTaxProfileSignature(taxes) {
+  if (!taxes || taxes.length === 0) return '';
+
+  const sigs = new Set();
+  for (const t of taxes) {
+    const rawType = (t.type || '').trim();
+    if (!rawType) continue;
+    const type = CANONICAL_TAX_TYPE[rawType] || rawType.toUpperCase();
+    const ret = t.retention ? 'ret' : 'nret';
+    const aliq = Number(t.aliq || 0).toFixed(4);
+    // Para ISS, incluir municipio de incidencia
+    const classifier = type === 'ISS' ? (t.cMunFG || '') : '';
+    const sig = classifier ? `${type}@${ret}@${aliq}@${classifier}` : `${type}@${ret}@${aliq}`;
+    sigs.add(sig);
+  }
+
+  return [...sigs].sort().join('+');
 }
 
 // ── Tipo canonico de imposto ─────────────────────────────────────────────────
@@ -338,6 +384,10 @@ export const CANONICAL_TAX_TYPE = {
   IPI: 'IPI', PIS: 'PIS', COFINS: 'COFINS',
   ISS: 'ISS', ISSQN: 'ISS',
   CBS: 'CBS', IBS: 'IBS', IS: 'IS',
+  // Federais retidos (NFS-e)
+  IRRF: 'IRRF', CSLL: 'CSLL', INSS: 'INSS',
+  // Agrupamento CSRF (PIS+COFINS+CSLL retidos)
+  CSRF: 'CSRF',
 };
 
 // ── Taxes passivos ──────────────────────────────────────────────────────────
@@ -428,6 +478,19 @@ export function makeTaxSignature(tax, opts = {}) {
 // ── Resolucao de parametros ─────────────────────────────────────────────────
 
 /**
+ * Mapa tax code final NetSuite → Tipo de Parametro FTE.
+ *
+ * Diferente de CST_TO_PARAM_TYPE (que resolve por CST fiscal do documento),
+ * este mapa resolve por tax code de destino — usado para impostos agrupados
+ * ou sem CST (ex: CSRF_RETIDO_BR que agrupa PIS+COFINS+CSLL retidos).
+ *
+ * Consultado ANTES do mapa por CST em resolveParamType().
+ */
+export const TAX_CODE_TO_PARAM_TYPE = {
+  CSRF_RETIDO_BR: 'Tipo de data',
+};
+
+/**
  * Heuristica de sugestao de paramType para CBS/IBS baseada em cClassTrib.
  * NAO e mapeamento definitivo — o match final depende das opcoes reais
  * encontradas no ambiente via findBestNSMatch().
@@ -440,25 +503,42 @@ export function resolveParamTypeCBS(cClassTrib, taxType, direction) {
 }
 
 /**
- * Resolve o Tipo de Parametro FTE a partir do tipo de imposto, CST e direcao.
- * Para CBS/IBS, delega para resolveParamTypeCBS usando cClassTrib.
+ * Resolve o Tipo de Parametro FTE.
  *
- * @param {string} taxType
+ * Hierarquia de resolucao:
+ *   1. Tax code final NetSuite (TAX_CODE_TO_PARAM_TYPE) — para impostos agrupados/sem CST
+ *   2. cClassTrib (CBS/IBS) — reforma tributaria
+ *   3. CST classico (CST_TO_PARAM_TYPE) — ICMS, PIS, COFINS, IPI
+ *
+ * @param {string} taxType - tipo canonico do imposto
  * @param {string} cst
  * @param {string} direction - 'entrada' | 'saida'
  * @param {string} [cClassTrib] - codigo de classificacao tributaria (CBS/IBS)
+ * @param {string} [taxCode] - tax code final NetSuite (ex: 'CSRF_RETIDO_BR')
+ * @returns {{ value: string, source: string } | null}
  */
-export function resolveParamType(taxType, cst, direction, cClassTrib) {
-  // CBS/IBS usam cClassTrib; fallback para CST que e o mesmo codigo de classificacao
+export function resolveParamType(taxType, cst, direction, cClassTrib, taxCode) {
+  // 1. Tax code final (CSRF_RETIDO_BR, etc.)
+  if (taxCode && TAX_CODE_TO_PARAM_TYPE[taxCode]) {
+    return { value: TAX_CODE_TO_PARAM_TYPE[taxCode], source: 'tax_code_map' };
+  }
+
+  // 2. CBS/IBS usam cClassTrib
   if (taxType === 'CBS' || taxType === 'IBS') {
     const classCode = cClassTrib || cst;
-    if (classCode) return resolveParamTypeCBS(classCode, taxType, direction);
+    if (classCode) {
+      const val = resolveParamTypeCBS(classCode, taxType, direction);
+      return val ? { value: val, source: 'cclasstrib' } : null;
+    }
     return null;
   }
+
+  // 3. CST classico
   const key = `${taxType}_${cst}_${direction}`;
-  if (CST_TO_PARAM_TYPE[key]) return CST_TO_PARAM_TYPE[key];
+  if (CST_TO_PARAM_TYPE[key]) return { value: CST_TO_PARAM_TYPE[key], source: 'cst_map' };
   const opposite = direction === 'entrada' ? 'saida' : 'entrada';
-  return CST_TO_PARAM_TYPE[`${taxType}_${cst}_${opposite}`] || null;
+  const fallback = CST_TO_PARAM_TYPE[`${taxType}_${cst}_${opposite}`];
+  return fallback ? { value: fallback, source: 'cst_map' } : null;
 }
 
 /**

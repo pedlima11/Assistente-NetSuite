@@ -30,7 +30,7 @@
     },
     "taxRules": {
       "title": "Tax Rules",
-      "description": "Import NF-e XML files for output rules and SPED files for input rules.",
+      "description": "Import NF-e/NFS-e XML files for output rules and SPED files for input rules.",
       "button": "Generate Rules"
     }
   }

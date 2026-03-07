@@ -30,7 +30,7 @@
     },
     "taxRules": {
       "title": "Reglas Fiscales",
-      "description": "Importe XMLs de NF-e para reglas de salida y archivos SPED para reglas de entrada.",
+      "description": "Importe XMLs de NF-e/NFS-e para reglas de salida y archivos SPED para reglas de entrada.",
       "button": "Generar Reglas"
     }
   }

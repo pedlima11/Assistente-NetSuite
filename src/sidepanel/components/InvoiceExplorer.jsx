@@ -5,19 +5,28 @@ import RuleBoxSidebar from './RuleBoxSidebar.jsx';
 import { groupItemsByDocument, recalcAffectedRules, buildEvidenceGroups } from '../../../shared/item-grouping.js';
 import { CANONICAL_TAX_TYPE, resolveParamType, classifyCFOP } from '../../../shared/tax-rule-core.js';
 
-/** Mapa tipo canonico → NetSuite tax code ID */
+/** Mapa tipo canonico → NetSuite tax code ID (sugestao, nao filtro) */
 const TAX_TYPE_TO_CODE = {
   ICMS: 'ICMS_BR', ICMS_ST: 'ICMS_ST_BR', ICMS_DIFAL: 'ICMS_DIFAL_BR',
   FCP: 'FCP_BR', FCP_ST: 'FCP_ST_BR',
   IPI: 'IPI_BR', PIS: 'PIS_BR', COFINS: 'COFINS_BR',
   ISS: 'ISS_BR', CBS: 'CBS_2026_BR', IBS: 'IBS_2026_BR', IS: 'IS_2026_BR',
+  // Retencoes de servico (NFS-e)
+  CSRF: 'CSRF_RETIDO_BR',
+  IRRF: 'IRRF_PJ_RETIDO_BR',
+  INSS: 'INSS_PJ_RETIDO_BR',
 };
 
 /**
  * Agrega impostos de um conjunto de itens por tipo canonico.
+ *
+ * IMPORTANTE: nenhum imposto e descartado por falta de tax code sugerido.
+ * TAX_TYPE_TO_CODE e consultado apenas como sugestao em buildDetsFromAgg().
+ * A evidencia fiscal do XML sempre sobrevive.
+ *
  * @param {Set<string>|string[]} itemIds
  * @param {Map<string, Object>} itemById
- * @returns {Map<string, Map<string, { count: number, aliqSum: number, cClassTribCounts: Map }>>}
+ * @returns {Map<string, Map<string, { count: number, aliqSum: number, cClassTribCounts: Map, retentionCount: number, amountSum: number, sourceTaxes: Map }>>}
  */
 function aggregateTaxes(itemIds, itemById) {
   const taxAgg = new Map();
@@ -26,16 +35,26 @@ function aggregateTaxes(itemIds, itemById) {
     if (!item?.taxes) continue;
     for (const t of item.taxes) {
       const ct = CANONICAL_TAX_TYPE[t.type] || (t.type || '').toUpperCase();
-      if (!TAX_TYPE_TO_CODE[ct]) continue;
+      if (!ct) continue; // tipo vazio — skip defensivo
       if (!taxAgg.has(ct)) taxAgg.set(ct, new Map());
       const cstMap = taxAgg.get(ct);
       const cst = t.cst || '_none';
-      if (!cstMap.has(cst)) cstMap.set(cst, { count: 0, aliqSum: 0, cClassTribCounts: new Map() });
+      if (!cstMap.has(cst)) cstMap.set(cst, {
+        count: 0, aliqSum: 0, cClassTribCounts: new Map(),
+        retentionCount: 0, amountSum: 0, sourceTaxes: new Map(),
+      });
       const e = cstMap.get(cst);
       e.count++;
       e.aliqSum += t.aliq || 0;
+      e.amountSum += t.valor || 0;
+      if (t.retention) e.retentionCount++;
       if (t.cClassTrib) {
         e.cClassTribCounts.set(t.cClassTrib, (e.cClassTribCounts.get(t.cClassTrib) || 0) + 1);
+      }
+      // Preservar dados originais por tipo para rastreabilidade (ex: composicao CSRF)
+      const origType = (t.type || '').toUpperCase();
+      if (origType && !e.sourceTaxes.has(origType)) {
+        e.sourceTaxes.set(origType, { aliq: t.aliq || 0, amount: t.valor || 0, retention: !!t.retention });
       }
     }
   }
@@ -44,6 +63,11 @@ function aggregateTaxes(itemIds, itemById) {
 
 /**
  * Converte taxAgg (de aggregateTaxes) em array de determinacoes.
+ *
+ * TAX_TYPE_TO_CODE e usado como SUGESTAO, nao como filtro.
+ * Impostos sem tax code sugerido geram determinacao com codigoImposto vazio
+ * e _requiresUserTaxCodeSelection = true — o usuario escolhe na UI.
+ *
  * @param {Map} taxAgg
  * @param {string} ruleId
  * @param {string} direction
@@ -60,16 +84,49 @@ function buildDetsFromAgg(taxAgg, ruleId, direction, validoAPartirDe) {
     if (data.cClassTribCounts.size > 0) {
       dominantCClassTrib = [...data.cClassTribCounts.entries()].sort((a, b) => b[1] - a[1])[0][0];
     }
+
+    const suggestedCode = TAX_TYPE_TO_CODE[ct] || '';
+    const hasSuggestion = !!suggestedCode;
+    // resolveParamType retorna { value, source } ou null
+    const paramResult = hasSuggestion
+      ? resolveParamType(ct, cst, direction, dominantCClassTrib, suggestedCode)
+      : null;
+    const resolvedParamType = paramResult?.value || '';
+    const paramSource = paramResult?.source || 'none';
+    const isRetention = data.retentionCount > 0 && data.retentionCount >= data.count / 2;
+
+    // Serializar sourceTaxes para rastreabilidade (composicao CSRF, etc.)
+    let sourceTaxes;
+    if (data.sourceTaxes && data.sourceTaxes.size > 0) {
+      sourceTaxes = [];
+      for (const [type, info] of data.sourceTaxes) {
+        sourceTaxes.push({ type, aliq: info.aliq, amount: info.amount, retention: info.retention });
+      }
+    }
+
     dets.push({
       externalId: `det-${ruleId}-${ct.toLowerCase()}`,
       ruleExternalId: ruleId,
-      codigoImposto: TAX_TYPE_TO_CODE[ct],
+      // codigoImposto: campo operacional usado por toda a UI e pelo RESTlet
+      // Quando ha sugestao, preenche como valor inicial editavel.
+      // Quando nao ha, fica vazio e o usuario seleciona na DeterminationCard.
+      codigoImposto: suggestedCode,
       aliquota: avgAliq,
-      tipoParametro: resolveParamType(ct, cst, direction, dominantCClassTrib) || '',
+      tipoParametro: resolvedParamType,
       valorParametro: '',
       valorAbatimento: '',
       validoAPartirDe: validoAPartirDe || '',
       cst,
+      // ── Metadados de evidencia ──
+      _extractedTaxType: ct,
+      _suggestedTaxCode: suggestedCode || undefined,
+      _taxCodeWasSuggested: hasSuggestion || undefined,
+      _requiresUserTaxCodeSelection: !hasSuggestion || undefined,
+      _retention: isRetention || undefined,
+      _unresolvedParam: (!resolvedParamType && hasSuggestion) || undefined,
+      _unresolvedReason: (!resolvedParamType && hasSuggestion) ? 'no_suggestion' : undefined,
+      _paramTypeResolutionSource: paramSource !== 'none' ? paramSource : undefined,
+      _sourceTaxes: sourceTaxes,
     });
   }
   return dets;

@@ -77,9 +77,20 @@ export function generateTaxRules(parsedItems, config) {
       vlItem: item.vlItem,
       codItem: item.itemCode || item.codItem || '',
       descrCompl: item.itemDesc || item.descrCompl || '',
+      // Campos de servico (NFS-e)
+      sourceType: item.sourceType || 'nfe',
+      documentModel: item.documentModel || 'NFE',
+      cfopSource: item.cfopSource || 'xml',
+      cListServ: item.cListServ || '',
+      cnae: item.cnae || '',
+      cMunFG: item.cMunFG || '',
+      issRetido: item.issRetido || false,
       taxes: (item.taxes || []).map(t => ({
         type: t.type, cst: t.cst, aliq: t.aliq, bc: t.bc, valor: t.valor,
         cClassTrib: t.cClassTrib || '',
+        retention: t.retention || false,
+        role: t.role || 'main',
+        cMunFG: t.cMunFG || '',
       })),
       source: effectiveConfig.source || 'xml',
     });

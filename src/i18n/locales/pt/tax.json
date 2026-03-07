@@ -218,7 +218,7 @@
   "main": {
     "title": "Regras Fiscais",
     "home": "Inicio",
-    "sourceXml": "NF-e XML",
+    "sourceXml": "NF-e / NFS-e",
     "sourceSped": "SPED Fiscal",
     "stepUploadSped": "1. Upload SPED",
     "stepUploadXml": "1. Upload XMLs",

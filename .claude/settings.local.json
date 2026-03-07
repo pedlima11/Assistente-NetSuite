@@ -32,7 +32,11 @@
       "Bash(git push -u origin main)",
       "Bash(gh auth setup-git)",
       "Bash(git push)",
-      "Bash(ls /Users/pedrolima/Desktop/Assistente_NetSuite/src/i18n/locales/pt/*.json)"
+      "Bash(ls /Users/pedrolima/Desktop/Assistente_NetSuite/src/i18n/locales/pt/*.json)",
+      "WebSearch",
+      "WebFetch(domain:nfe.prefeitura.sp.gov.br)",
+      "WebFetch(domain:github.com)",
+      "Bash(git add .claude/settings.local.json package-lock.json package.json shared/tax-rule-core.js src/data/tax-reference.js src/i18n/locales/en/home.json src/i18n/locales/en/tax.json src/i18n/locales/es/home.json src/i18n/locales/es/tax.json src/i18n/locales/pt/home.json src/i18n/locales/pt/tax.json src/parsers/nfe-parser.js src/parsers/nfse-parser.js src/services/tax-rule-generator.js src/sidepanel/components/InvoiceExplorer.jsx src/sidepanel/pages/TaxRules.jsx suitescripts/rl_create_subsidiary.js mockup-demo-accelerator.html)"
     ]
   }
 }

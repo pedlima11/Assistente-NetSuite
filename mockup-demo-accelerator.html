@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo Accelerator — Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ocean-5: #FAFCFD;
+    --ocean-10: #F5FAFC;
+    --ocean-20: #ECF4F7;
+    --ocean-30: #E7F2F5;
+    --ocean-40: #C2DAE4;
+    --ocean-60: #94BFCE;
+    --ocean-80: #6B9FB3;
+    --ocean-100: #528A9F;
+    --ocean-120: #36677D;
+    --ocean-150: #264759;
+    --ocean-180: #13212C;
+    --pine: #86B596;
+    --pine-dark: #6a9a7a;
+    --pine-bg: #86B59612;
+    --pine-border: #86B59630;
+    --rose: #FF8675;
+    --rose-bg: #FF867510;
+    --golden: #E2C06B;
+    --golden-bg: #E2C06B18;
+    --golden-border: #E2C06B40;
+    --white: #ffffff;
+    --font: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --radius: 8px;
+    --radius-sm: 5px;
+    --shadow-sm: 0 1px 2px rgba(19,33,44,0.06);
+    --shadow: 0 2px 8px rgba(19,33,44,0.08), 0 1px 2px rgba(19,33,44,0.04);
+    --shadow-lg: 0 8px 30px rgba(19,33,44,0.12), 0 2px 8px rgba(19,33,44,0.06);
+    --transition: 180ms ease;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font);
+    background: var(--ocean-20);
+    color: var(--ocean-180);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── State switcher (mockup only) ────────────────────────── */
+  .switcher {
+    display: flex;
+    gap: 2px;
+    background: var(--ocean-40);
+    padding: 2px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .switcher button {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 6px 16px;
+    border: none;
+    background: transparent;
+    color: var(--ocean-100);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: var(--transition);
+  }
+  .switcher button:hover { color: var(--ocean-150); }
+  .switcher button.active {
+    background: var(--white);
+    color: var(--ocean-150);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ── Card shell ──────────────────────────────────────────── */
+  .card {
+    width: 100%;
+    max-width: 560px;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── Top accent bar ──────────────────────────────────────── */
+  .card::before {
+    content: '';
+    display: block;
+    height: 3px;
+    background: linear-gradient(90deg, var(--ocean-120), var(--ocean-80), var(--ocean-60));
+  }
+
+  /* ── Header ──────────────────────────────────────────────── */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 28px 0;
+  }
+  .header svg { flex-shrink: 0; }
+  .header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .header-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ocean-150);
+    letter-spacing: -0.01em;
+  }
+  .header-sub {
+    font-size: 11px;
+    color: var(--ocean-80);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Content area ────────────────────────────────────────── */
+  .content { padding: 20px 28px 28px; }
+
+  /* ── Form fields ─────────────────────────────────────────── */
+  .field { margin-bottom: 16px; }
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ocean-150);
+    margin-bottom: 5px;
+    letter-spacing: 0.01em;
+  }
+  .field input,
+  .field select {
+    width: 100%;
+    font-family: var(--font);
+    font-size: 13.5px;
+    padding: 9px 12px;
+    border: 1.5px solid var(--ocean-40);
+    border-radius: var(--radius-sm);
+    background: var(--ocean-5);
+    color: var(--ocean-180);
+    transition: var(--transition);
+    outline: none;
+  }
+  .field input:focus,
+  .field select:focus {
+    border-color: var(--ocean-80);
+    box-shadow: 0 0 0 3px rgba(107,159,179,0.12);
+  }
+  .field input::placeholder { color: var(--ocean-60); }
+
+  .field .auto-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--ocean-100);
+    background: var(--ocean-20);
+    border: 1px solid var(--ocean-40);
+    padding: 1px 7px;
+    border-radius: 10px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .field .auto-badge svg { width: 10px; height: 10px; }
+
+  /* ── Drop zone ───────────────────────────────────────────── */
+  .dropzone {
+    border: 1.5px dashed var(--ocean-40);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+    background: var(--ocean-5);
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .dropzone:hover {
+    border-color: var(--ocean-80);
+    background: var(--ocean-10);
+  }
+  .dropzone-icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .dropzone-icon svg {
+    color: var(--ocean-60);
+  }
+  .dropzone-text {
+    font-size: 13px;
+    color: var(--ocean-100);
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+  .dropzone-hint {
+    font-size: 11.5px;
+    color: var(--ocean-60);
+  }
+
+  /* ── File chips ──────────────────────────────────────────── */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 14px;
+    justify-content: center;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 4px;
+    line-height: 1;
+  }
+  .chip svg { width: 12px; height: 12px; flex-shrink: 0; }
+  .chip-ok {
+    background: var(--pine-bg);
+    border: 1px solid var(--pine-border);
+    color: var(--pine-dark);
+  }
+  .chip-warn {
+    background: var(--golden-bg);
+    border: 1px solid var(--golden-border);
+    color: #b89a3e;
+    cursor: pointer;
+  }
+  .chip-warn:hover { background: #E2C06B25; }
+
+  .chip-remove {
+    width: 14px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: var(--transition);
+  }
+  .chip-remove:hover { opacity: 1; }
+
+  /* ── Primary button ──────────────────────────────────────── */
+  .btn-primary {
+    width: 100%;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 24px;
+    background: var(--ocean-120);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.01em;
+  }
+  .btn-primary:hover {
+    background: var(--ocean-150);
+    box-shadow: 0 2px 12px rgba(38,71,89,0.25);
+  }
+  .btn-primary:active { transform: scale(0.99); }
+  .btn-primary svg { width: 16px; height: 16px; }
+
+  /* ── STATE 2: Importing ──────────────────────────────────── */
+  .importing-header {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ocean-150);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .importing-header .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ocean-100);
+    animation: pulse-dot 1.2s infinite ease-in-out;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+
+  .progress-list { display: flex; flex-direction: column; gap: 14px; }
+
+  .progress-row {
+    display: grid;
+    grid-template-columns: 130px 1fr auto;
+    align-items: center;
+    gap: 12px;
+  }
+  .progress-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ocean-150);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .progress-label svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .progress-label .check { color: var(--pine); }
+  .progress-label .waiting { color: var(--ocean-40); }
+
+  .progress-track {
+    height: 6px;
+    background: var(--ocean-20);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 400ms ease;
+  }
+  .progress-fill.done { background: var(--pine); width: 100%; }
+  .progress-fill.active {
+    background: linear-gradient(90deg, var(--ocean-100), var(--ocean-80));
+    animation: bar-shimmer 1.8s infinite ease-in-out;
+  }
+  @keyframes bar-shimmer {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+  }
+  .progress-fill.pending { width: 0; }
+
+  .progress-status {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    min-width: 60px;
+    text-align: right;
+  }
+  .progress-status.done { color: var(--pine); }
+  .progress-status.active { color: var(--ocean-120); }
+  .progress-status.pending { color: var(--ocean-60); }
+
+  /* ── Overall bar ─────────────────────────────────────────── */
+  .overall {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--ocean-20);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .overall-track {
+    flex: 1;
+    height: 8px;
+    background: var(--ocean-20);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .overall-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--ocean-120), var(--ocean-100));
+    transition: width 400ms ease;
+  }
+  .overall-pct {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ocean-150);
+    min-width: 36px;
+    text-align: right;
+  }
+
+  /* ── STATE 3: Done ───────────────────────────────────────── */
+  .done-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--pine-bg);
+    border: 2px solid var(--pine-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    animation: scale-in 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes scale-in {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .done-icon svg { color: var(--pine); }
+
+  .done-title {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ocean-180);
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+  }
+
+  .done-summary {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ocean-100);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .done-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .stat {
+    background: var(--ocean-5);
+    border: 1px solid var(--ocean-30);
+    border-radius: var(--radius-sm);
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ocean-150);
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--ocean-80);
+    font-weight: 500;
+  }
+
+  .btn-open {
+    width: 100%;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 24px;
+    background: var(--pine);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.01em;
+  }
+  .btn-open:hover {
+    background: var(--pine-dark);
+    box-shadow: 0 2px 12px rgba(106,154,122,0.3);
+  }
+  .btn-open svg { width: 16px; height: 16px; }
+
+  .link-again {
+    display: block;
+    text-align: center;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--ocean-80);
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+  }
+  .link-again:hover { color: var(--ocean-120); }
+
+  /* ── Visibility ──────────────────────────────────────────── */
+  .state { display: none; }
+  .state.visible { display: block; }
+
+  /* ── Locked state overlay ────────────────────────────────── */
+  .form-locked { opacity: 0.4; pointer-events: none; }
+
+  /* ── Divider ─────────────────────────────────────────────── */
+  .divider {
+    height: 1px;
+    background: var(--ocean-20);
+    margin: 0 0 20px;
+  }
+
+  /* ── Responsive ──────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .card { border-radius: 8px; }
+    .content { padding: 16px 20px 24px; }
+    .header { padding: 16px 20px 0; }
+    .field-row { grid-template-columns: 1fr; }
+    .progress-row { grid-template-columns: 110px 1fr auto; }
+    .done-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Mockup state switcher -->
+<div class="switcher">
+  <button class="active" onclick="showState('input')">INPUT</button>
+  <button onclick="showState('importing')">IMPORTING</button>
+  <button onclick="showState('done')">DONE</button>
+</div>
+
+<div class="card">
+
+  <!-- ── Header (always visible) ──────────────────────────── -->
+  <div class="header">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect width="28" height="28" rx="6" fill="var(--ocean-120)"/>
+      <path d="M8 10h12M8 14h8M8 18h10" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    <div class="header-text">
+      <div class="header-title">Demo Accelerator</div>
+      <div class="header-sub">Importacao rapida para NetSuite</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- STATE 1: INPUT                                        -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div id="state-input" class="state visible">
+
+      <div class="field-row">
+        <div class="field">
+          <label>Empresa</label>
+          <input type="text" placeholder="Nome ou razao social" value="Comercial ABC Ltda">
+        </div>
+        <div class="field">
+          <label>
+            Segmento
+            <span class="auto-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              auto
+            </span>
+          </label>
+          <select>
+            <option selected>Distribuicao</option>
+            <option>Varejo</option>
+            <option>Industria</option>
+            <option>Servicos</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="dropzone">
+        <div class="dropzone-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ocean-60)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="dropzone-text">Arraste arquivos aqui</div>
+        <div class="dropzone-hint">NF-e XML, Plano de Contas, Balancete, Listas</div>
+        <div class="chips">
+          <span class="chip chip-ok">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 12l2 2 4-4"/></svg>
+            NF-e ×12
+            <span class="chip-remove">×</span>
+          </span>
+          <span class="chip chip-ok">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 12l2 2 4-4"/></svg>
+            Plano de Contas ×1
+            <span class="chip-remove">×</span>
+          </span>
+          <span class="chip chip-warn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+            ? Lista.xlsx
+          </span>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="showState('importing')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Importar para NetSuite
+      </button>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- STATE 2: IMPORTING                                    -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div id="state-importing" class="state">
+
+      <div class="importing-header">
+        <span class="dot"></span>
+        Importando para Comercial ABC Ltda...
+      </div>
+
+      <div class="progress-list">
+
+        <div class="progress-row">
+          <div class="progress-label">
+            <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+            Subsidiary
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill done"></div>
+          </div>
+          <div class="progress-status done">1/1</div>
+        </div>
+
+        <div class="progress-row">
+          <div class="progress-label">
+            <svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+            Clientes
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill done"></div>
+          </div>
+          <div class="progress-status done">25/25</div>
+        </div>
+
+        <div class="progress-row">
+          <div class="progress-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--ocean-100)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            Itens
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill active" style="width: 45%"></div>
+          </div>
+          <div class="progress-status active">18/40</div>
+        </div>
+
+        <div class="progress-row">
+          <div class="progress-label">
+            <svg class="waiting" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/></svg>
+            Fornecedores
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill pending"></div>
+          </div>
+          <div class="progress-status pending">aguardando</div>
+        </div>
+
+        <div class="progress-row">
+          <div class="progress-label">
+            <svg class="waiting" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/></svg>
+            Regras Fiscais
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill pending"></div>
+          </div>
+          <div class="progress-status pending">aguardando</div>
+        </div>
+
+      </div>
+
+      <div class="overall">
+        <div class="overall-track">
+          <div class="overall-fill" style="width: 48%"></div>
+        </div>
+        <div class="overall-pct">48%</div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- STATE 3: DONE                                         -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div id="state-done" class="state">
+
+      <div class="done-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+
+      <div class="done-title">Pronto!</div>
+      <div class="done-summary">
+        Ambiente preparado para <strong>Comercial ABC Ltda</strong>
+      </div>
+
+      <div class="done-stats">
+        <div class="stat">
+          <div class="stat-num">25</div>
+          <div class="stat-label">Clientes</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">40</div>
+          <div class="stat-label">Itens</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">20</div>
+          <div class="stat-label">Regras Fiscais</div>
+        </div>
+      </div>
+
+      <button class="btn-open" onclick="window.open('#','_blank')">
+        Abrir NetSuite
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+      </button>
+
+      <a class="link-again" onclick="showState('input')">Importar novamente</a>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showState(name) {
+  document.querySelectorAll('.state').forEach(s => s.classList.remove('visible'));
+  document.getElementById('state-' + name).classList.add('visible');
+  document.querySelectorAll('.switcher button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>

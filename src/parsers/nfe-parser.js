@@ -5,7 +5,10 @@
  * e nao podem ser enviados ao backend.
  *
  * Usa DOMParser nativo do browser (sem dependencias externas).
+ * Tambem detecta e delega NFS-e ao nfse-parser.
  */
+
+import { isNFSe, extractNFSeItems, getNFSeEmptyReason } from './nfse-parser.js';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -451,6 +454,16 @@ export async function parseNFeFile(file) {
       };
     }
 
+    // Testar NFS-e ANTES de NF-e — evita que tags ambiguas desviem o fluxo
+    if (isNFSe(xmlDoc)) {
+      const nfseItems = extractNFSeItems(xmlDoc);
+      return {
+        fileName: file.name,
+        items: nfseItems,
+        errors: nfseItems.length === 0 ? [getNFSeEmptyReason(xmlDoc)] : [],
+      };
+    }
+
     // Verificar se eh uma NF-e
     const hasNFe = xmlDoc.getElementsByTagName('NFe').length > 0
       || xmlDoc.getElementsByTagName('infNFe').length > 0;
@@ -462,7 +475,7 @@ export async function parseNFeFile(file) {
         return {
           fileName: file.name,
           items: [],
-          errors: ['Arquivo nao parece ser uma NF-e valida (tag NFe ou infNFe nao encontrada)'],
+          errors: ['Arquivo nao parece ser uma NF-e ou NFS-e valida'],
         };
       }
     }

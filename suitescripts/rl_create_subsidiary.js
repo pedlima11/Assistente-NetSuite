@@ -714,15 +714,40 @@ define(['N/record', 'N/search', 'N/query', 'N/log'], (record, search, query, log
 
       const ctxParamCache = {};
 
+      /**
+       * Busca opcoes contextuais do campo paramType com taxCode ja setado.
+       * Retorna objeto com status explicito para distinguir:
+       *   - status 'ok' + optionsCount 0 = tax code nao exige paramType
+       *   - status 'ok' + optionsCount > 0 = tax code exige paramType
+       *   - status 'error' = discovery falhou (campo nao encontrado, etc.)
+       *   - null = campo nao existe no record
+       */
       function getCtxParamTypes(detRec, taxCode, subsidiaryKey) {
         const cacheKey = taxCode + '|' + (subsidiaryKey || '');
         if (ctxParamCache[cacheKey]) return ctxParamCache[cacheKey];
 
-        const ptField = detRec.getField({ fieldId: DET_FIELDS.paramType });
+        var ptField;
+        try {
+          ptField = detRec.getField({ fieldId: DET_FIELDS.paramType });
+        } catch (e) {
+          log.error('ParamType getField error', taxCode + ': ' + e.message);
+          var errResult = { status: 'error', map: {}, optionsCount: 0, message: 'getField failed: ' + e.message };
+          ctxParamCache[cacheKey] = errResult;
+          return errResult;
+        }
         if (!ptField || typeof ptField.getSelectOptions !== 'function') return null;
 
-        const options = ptField.getSelectOptions({ filter: '', operator: 'contains' });
-        const result = { map: {}, optionsCount: options.length };
+        var options;
+        try {
+          options = ptField.getSelectOptions({ filter: '', operator: 'contains' });
+        } catch (e) {
+          log.error('ParamType getSelectOptions error', taxCode + ': ' + e.message);
+          var errResult2 = { status: 'error', map: {}, optionsCount: 0, message: 'getSelectOptions failed: ' + e.message };
+          ctxParamCache[cacheKey] = errResult2;
+          return errResult2;
+        }
+
+        const result = { status: 'ok', map: {}, optionsCount: options.length };
 
         for (let i = 0; i < options.length; i++) {
           const t = options[i].text || '';
@@ -736,7 +761,7 @@ define(['N/record', 'N/search', 'N/query', 'N/log'], (record, search, query, log
         }
 
         ctxParamCache[cacheKey] = result;
-        log.audit('ParamType ctx cache [' + cacheKey + ']', options.length + ' options');
+        log.audit('ParamType ctx cache [' + cacheKey + ']', 'status=' + result.status + ' options=' + options.length);
         return result;
       }
 
@@ -997,30 +1022,11 @@ define(['N/record', 'N/search', 'N/query', 'N/log'], (record, search, query, log
           }
 
           if (!finalPtVal) {
-            var isReform = isReformTaxCode(det.codigoImposto);
-            var gateMsg = '[GATE] Não foi possível salvar o registro de configurações de determinação de impostos porque nenhum tipo de parâmetro foi selecionado. Para o imposto ' +
-                     (det.codigoImposto || '(vazio)') + ', selecione o tipo de parâmetro' +
-                     (det.tipoParametro ? ' (sugestão: "' + det.tipoParametro + '")' : '') +
-                     ', digite o valor do parâmetro e tente novamente.';
-            if (isReform && cct) {
-              gateMsg += ' Verifique se o param type "cClassTrib ' + cct +
-                '" existe em CUSTOMRECORD_FTE_PARAMTYPE no ambiente NetSuite.';
-            }
-            results.errors.push({
-              type: 'det',
-              externalId: det.externalId,
-              error: gateMsg,
-            });
-            log.error('ParamType Missing - skip', JSON.stringify({
-              externalId: det.externalId,
-              tipoParametro: det.tipoParametro,
-              taxCode: det.codigoImposto,
-              cClassTrib: cct || '(sem)',
-              isReform: isReform,
-              resolvedParamId: resolvedParamId || '(null)',
-              finalPtVal: finalPtVal || '(vazio)',
-            }));
-            continue;
+            // Sem paramType resolvido — tentar salvar assim mesmo.
+            // Se o NetSuite exigir paramType, o save() lanca excecao
+            // e o catch captura com mensagem [SAVE].
+            // Se nao exigir, salva normalmente (ex: ISS_BR sem paramType).
+            log.audit('ParamType empty - try save', det.codigoImposto + ' — sem paramType resolvido, tentando salvar (NetSuite decide)');
           }
 
           // Log pre-save diagnostico — sempre leitura fresca do record
