@@ -12,7 +12,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@rollup/rollup-linux-arm64-gnu": "^4.59.0",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
     "express": "^4.21.0",
