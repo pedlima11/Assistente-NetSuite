@@ -18,19 +18,36 @@ import InvoiceExplorer from '../components/InvoiceExplorer.jsx';
 import { buildRuleAlerts } from '../../utils/rule-alerts.js';
 import { translateWarning } from '../../utils/warning-translator.js';
 
+// ── Normalize SPED result shape (merged vs fiscal-only) ─────────────────────
+
+function normalizeSpedResult(result) {
+  const isMerged = result.source === 'merged';
+  return {
+    source: isMerged ? 'merged' : 'fiscal',
+    fiscalRawStats: isMerged ? (result.rawStats?.fiscal || []) : (result.rawStats || []),
+    contribRawStats: isMerged ? (result.rawStats?.contrib || []) : [],
+    fiscalQualityStats: isMerged ? (result.qualityStats?.fiscal || {}) : (result.qualityStats || {}),
+    contribQualityStats: isMerged ? (result.qualityStats?.contrib || null) : null,
+    companyInfo: result.companyInfo || null,
+    mergeStats: result.mergeStats || null,
+    blockMValidation: result.blockMValidation || null,
+  };
+}
+
 // ── SPED Processing Summary ─────────────────────────────────────────────────
 
-function SpedSummary({ rawStats, qualityStats, companyInfo }) {
+function SpedSummary({ fiscalRawStats, contribRawStats, fiscalQualityStats, contribQualityStats, companyInfo }) {
   const { t } = useTranslation('tax');
   const [expanded, setExpanded] = useState(false);
 
-  if (!rawStats || !qualityStats) return null;
+  if (!fiscalRawStats || !fiscalQualityStats) return null;
 
   // Agregar rawStats de multiplos arquivos
-  const totalDocs = rawStats.reduce((s, r) => s + (r.documentsRead || 0), 0);
-  const acceptedDocs = rawStats.reduce((s, r) => s + (r.documentsAccepted || 0), 0);
-  const rejectedDocs = rawStats.reduce((s, r) => s + (r.documentsRejectedByStatus || 0), 0);
-  const totalLines = rawStats.reduce((s, r) => s + (r.totalLines || 0), 0);
+  const totalDocs = fiscalRawStats.reduce((s, r) => s + (r.documentsRead || 0), 0);
+  const acceptedDocs = fiscalRawStats.reduce((s, r) => s + (r.documentsAccepted || 0), 0);
+  const rejectedDocs = fiscalRawStats.reduce((s, r) => s + (r.documentsRejectedByStatus || 0), 0);
+  const totalLines = fiscalRawStats.reduce((s, r) => s + (r.totalLines || 0), 0);
+  const qualityStats = fiscalQualityStats;
 
   return (
     <div className="bg-ocean-10 rounded-lg p-3 space-y-2">
@@ -65,7 +82,7 @@ function SpedSummary({ rawStats, qualityStats, companyInfo }) {
 
       {expanded && (
         <div className="text-xs text-ocean-150 space-y-1 border-t border-ocean-30 pt-2">
-          <p>{t('spedSummary.linesRead', { count: totalLines.toLocaleString(), files: rawStats.length })}</p>
+          <p>{t('spedSummary.linesRead', { count: totalLines.toLocaleString(), files: fiscalRawStats.length })}</p>
           <p>{t('spedSummary.documents', { total: totalDocs, accepted: acceptedDocs, rejected: rejectedDocs })}</p>
           <p>{t('spedSummary.uniqueStats', { cfops: qualityStats.uniqueCFOPs, ncms: qualityStats.uniqueNCMs, ufs: qualityStats.uniqueUFs })}</p>
 
@@ -84,14 +101,22 @@ function SpedSummary({ rawStats, qualityStats, companyInfo }) {
             </p>
           )}
 
-          {rawStats.some(r => r.skippedByCodSit && Object.keys(r.skippedByCodSit).length > 0) && (
+          {fiscalRawStats.some(r => r.skippedByCodSit && Object.keys(r.skippedByCodSit).length > 0) && (
             <p>
               {t('spedSummary.codSitIgnored')}: {(() => {
-                const agg = rawStats.flatMap(r => Object.entries(r.skippedByCodSit || {}))
+                const agg = fiscalRawStats.flatMap(r => Object.entries(r.skippedByCodSit || {}))
                   .reduce((acc, [k, v]) => { acc[k] = (acc[k] || 0) + v; return acc; }, {});
                 return Object.entries(agg).map(([k, v]) => `${k}: ${v}`).join(', ');
               })()}
             </p>
+          )}
+
+          {contribQualityStats && (
+            <div className="border-t border-ocean-30 pt-2 mt-2 space-y-1">
+              <p className="font-medium">{t('spedSummary.contribTitle')}</p>
+              <p>{t('spedSummary.contribItemsAccepted')}: {contribQualityStats.itemsAccepted || 0}</p>
+              <p>{t('spedSummary.contribItemsRejected')}: {contribQualityStats.itemsRejected || 0}</p>
+            </div>
           )}
         </div>
       )}
@@ -200,7 +225,7 @@ function SpedQualityGate({ qualityStats, onAcknowledge, onBack }) {
 
 // ── Block M Validation Banner ────────────────────────────────────────────────
 
-function BlockMBanner({ validation }) {
+function BlockMBanner({ validation, approximate = false }) {
   const { t } = useTranslation('tax');
   const [expanded, setExpanded] = useState(false);
 
@@ -214,6 +239,9 @@ function BlockMBanner({ validation }) {
     <div className={`rounded-lg border p-3 space-y-2 ${
       hasWarnings ? 'border-amber-200 bg-amber-50' : 'border-green-200 bg-green-50'
     }`}>
+      {approximate && (
+        <p className="text-xs text-ocean-100 italic">{t('spedSummary.blockMApproximate')}</p>
+      )}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {hasWarnings
@@ -389,6 +417,7 @@ function NeedsReviewBanner({ needsReview }) {
 
 function StepUpload({
   source, files, setFiles, config, setConfig, spedOptions, setSpedOptions,
+  contribFiles, setContribFiles, contribSpedOptions, setContribSpedOptions,
   onProcess, processing, parseErrors, subsidiaries, subsLoading,
   spedProgress, spedSummary,
   xmlProgress, processingPhase, onCancelXml,
@@ -401,15 +430,28 @@ function StepUpload({
     <div className="space-y-4">
       {/* Uploader */}
       {isSped ? (
-        <XmlFileUploader
-          onFilesChanged={setFiles}
-          accept=".txt"
-          label={t('stepUpload.spedLabel')}
-          subtitle={t('stepUpload.spedSubtitle')}
-          maxFileSize={500 * 1024 * 1024}
-        />
+        <>
+          <XmlFileUploader
+            key="sped-fiscal"
+            onFilesChanged={setFiles}
+            accept=".txt"
+            label={t('stepUpload.spedLabel')}
+            subtitle={t('stepUpload.spedSubtitle')}
+            maxFileSize={500 * 1024 * 1024}
+          />
+          <div className="mt-3">
+            <XmlFileUploader
+              key="sped-contrib"
+              onFilesChanged={setContribFiles}
+              accept=".txt"
+              label={t('stepUpload.contribLabel')}
+              subtitle={t('stepUpload.contribSubtitle')}
+              maxFileSize={500 * 1024 * 1024}
+            />
+          </div>
+        </>
       ) : (
-        <XmlFileUploader onFilesChanged={setFiles} />
+        <XmlFileUploader key="xml" onFilesChanged={setFiles} />
       )}
 
       {/* SPED-specific options */}
@@ -462,6 +504,36 @@ function StepUpload({
                 className="rounded"
               />
               {t('stepUpload.enrichNcm')}
+            </label>
+          </div>
+        </div>
+      )}
+
+      {/* Contrib options */}
+      {isSped && contribFiles && contribFiles.length > 0 && (
+        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-2">
+          <div className="flex items-center gap-1 text-sm text-indigo-700 font-medium">
+            <Info className="w-4 h-4" />
+            {t('stepUpload.contribOptionsTitle')}
+          </div>
+          <div className="space-y-1">
+            <label className="flex items-center gap-2 text-xs text-ocean-150">
+              <input
+                type="checkbox"
+                checked={contribSpedOptions.includeServices}
+                onChange={(e) => setContribSpedOptions(o => ({ ...o, includeServices: e.target.checked }))}
+                className="rounded"
+              />
+              {t('stepUpload.includeServices')}
+            </label>
+            <label className="flex items-center gap-2 text-xs text-ocean-150">
+              <input
+                type="checkbox"
+                checked={contribSpedOptions.includeOtherCredits}
+                onChange={(e) => setContribSpedOptions(o => ({ ...o, includeOtherCredits: e.target.checked }))}
+                className="rounded"
+              />
+              {t('stepUpload.includeOtherCredits')}
             </label>
           </div>
         </div>
@@ -625,11 +697,54 @@ function StepUpload({
       {/* SPED summary */}
       {isSped && spedSummary && (
         <SpedSummary
-          rawStats={spedSummary.rawStats}
-          qualityStats={spedSummary.qualityStats}
+          fiscalRawStats={spedSummary.fiscalRawStats}
+          contribRawStats={spedSummary.contribRawStats}
+          fiscalQualityStats={spedSummary.fiscalQualityStats}
+          contribQualityStats={spedSummary.contribQualityStats}
           companyInfo={spedSummary.companyInfo}
         />
       )}
+
+      {/* Block M validation */}
+      {isSped && spedSummary?.blockMValidation && (
+        <BlockMBanner
+          validation={spedSummary.blockMValidation}
+          approximate={true}
+        />
+      )}
+
+      {/* Merge stats */}
+      {isSped && spedSummary?.mergeStats && (() => {
+        const ms = spedSummary.mergeStats;
+        return (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 space-y-2">
+            <p className="text-xs font-medium text-indigo-700">{t('spedSummary.mergeTitle')}</p>
+            <div className="grid grid-cols-2 gap-2 text-center text-xs">
+              <div>
+                <p className="text-sm font-bold text-indigo-800">{ms.matchesByCodItem}</p>
+                <p className="text-indigo-600">{t('spedSummary.matchesCodItem')}</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-indigo-800">{ms.matchesByNumItem}</p>
+                <p className="text-indigo-600">{t('spedSummary.matchesNumItem')}</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-amber-700">{ms.fiscalFallbacks}</p>
+                <p className="text-amber-600">{t('spedSummary.fiscalFallbacks')}</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-ocean-150">{ms.standaloneContrib}</p>
+                <p className="text-ocean-60">{t('spedSummary.standaloneContrib')}</p>
+              </div>
+            </div>
+            {ms.ambiguousSkips > 0 && (
+              <p className="text-xs text-amber-600">
+                {t('spedSummary.ambiguousSkips', { count: ms.ambiguousSkips })}
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Erros de parse */}
       {parseErrors.length > 0 && (
@@ -657,10 +772,12 @@ function StepUpload({
           <ArrowRight className="w-4 h-4" />
         )}
         {processing
-          ? (isSped ? t('stepUpload.processingSped') : t('stepUpload.processingXmls'))
+          ? (isSped
+            ? (contribFiles && contribFiles.length > 0 ? t('stepUpload.processingMerged') : t('stepUpload.processingSped'))
+            : t('stepUpload.processingXmls'))
           : (lookupsStatus === 'loading' || lookupsStatus === 'idle')
             ? t('stepUpload.loadingNetSuiteData')
-            : t('stepUpload.processFiles', { count: files.length, plural: files.length > 1 ? 's' : '' })
+            : t('stepUpload.processFiles', { count: files.length + (contribFiles?.length || 0), plural: (files.length + (contribFiles?.length || 0)) > 1 ? 's' : '' })
         }
       </button>
 
@@ -1869,6 +1986,11 @@ export default function TaxRules() {
     requireNcm: false,
     useNcmNetSuite: false,
   });
+  const [contribFiles, setContribFiles] = useState([]);
+  const [contribSpedOptions, setContribSpedOptions] = useState({
+    includeServices: true,
+    includeOtherCredits: true,
+  });
   const [processing, setProcessing] = useState(false);
   const [parseErrors, setParseErrors] = useState([]);
 
@@ -2070,15 +2192,25 @@ export default function TaxRules() {
     setQualityGateOpen(false);
 
     try {
+      // Decide endpoint: merged (fiscal + contrib) vs fiscal-only
+      const isMerged = contribFiles.length > 0;
+      const endpoint = isMerged ? '/api/parse-sped-merged/start' : '/api/parse-sped/start';
+      const sseEndpoint = isMerged ? '/api/parse-sped-merged/events' : '/api/parse-sped/events';
+      const resultEndpoint = isMerged ? '/api/parse-sped-merged/result' : '/api/parse-sped/result';
+
       // Upload files via FormData
       const formData = new FormData();
-      for (const file of files) {
-        formData.append('files', file);
+      if (isMerged) {
+        for (const file of files) formData.append('fiscalFiles', file);
+        for (const file of contribFiles) formData.append('contribFiles', file);
+      } else {
+        for (const file of files) formData.append('files', file);
       }
       const storedCreds = localStorage.getItem('ns_credentials_v1');
       const _credentials = storedCreds ? JSON.parse(storedCreds) : null;
       formData.append('options', JSON.stringify({
         ...spedOptions,
+        ...(isMerged ? contribSpedOptions : {}),
         subsidiaryName: config.subsidiaryName,
         regimeDestinatario: config.regimeDestinatario,
         lobDestinatario: config.lobDestinatario,
@@ -2088,7 +2220,7 @@ export default function TaxRules() {
         _credentials,
       }));
 
-      const startResp = await fetch('/api/parse-sped/start', {
+      const startResp = await fetch(endpoint, {
         method: 'POST',
         body: formData,
       });
@@ -2102,7 +2234,7 @@ export default function TaxRules() {
 
       // Connect SSE for progress
       await new Promise((resolve, reject) => {
-        const es = new EventSource(`/api/parse-sped/events/${jobId}`);
+        const es = new EventSource(`${sseEndpoint}/${jobId}`);
         eventSourceRef.current = es;
 
         es.addEventListener('progress', (e) => {
@@ -2138,7 +2270,7 @@ export default function TaxRules() {
       });
 
       // Fetch result
-      const resultResp = await fetch(`/api/parse-sped/result/${jobId}`);
+      const resultResp = await fetch(`${resultEndpoint}/${jobId}`);
       if (!resultResp.ok) {
         const errData = await resultResp.json();
         throw new Error(errData.error || t('main.errorGetResult'));
@@ -2146,11 +2278,7 @@ export default function TaxRules() {
 
       const result = await resultResp.json();
 
-      setSpedSummary({
-        rawStats: result.rawStats,
-        qualityStats: result.qualityStats,
-        companyInfo: result.companyInfo,
-      });
+      setSpedSummary(normalizeSpedResult(result));
 
       if (!result.items || result.items.length === 0) {
         setParseErrors([{ fileName: 'SPED', errors: [t('main.noItemsFoundSped')] }]);
@@ -2176,8 +2304,9 @@ export default function TaxRules() {
         setParseErrors(prev => [...prev, { fileName: 'Avisos', errors: result.warnings }]);
       }
 
-      // Quality gate: bloquear se CST_ICMS ausente
-      const qs = result.qualityStats;
+      // Quality gate: bloquear se CST_ICMS ausente (usa fiscal qualityStats)
+      const normalized = normalizeSpedResult(result);
+      const qs = normalized.fiscalQualityStats;
       const hasBlockingQuality = (qs?.warningReasons?.noIcmsCst > 0);
 
       if (hasBlockingQuality) {
@@ -2234,7 +2363,14 @@ export default function TaxRules() {
       {step === 'upload' && (
         <div className="flex rounded-lg border border-ocean-30 overflow-hidden">
           <button
-            onClick={() => { setSource('xml'); setFiles([]); setParseErrors([]); setSpedSummary(null); }}
+            onClick={() => {
+              if (eventSourceRef.current) { eventSourceRef.current.close(); eventSourceRef.current = null; }
+              setSource('xml'); setFiles([]); setContribFiles([]);
+              setParseErrors([]); setSpedSummary(null); setSpedProgress(null);
+              setQualityGateOpen(false); setRules([]); setDeterminations([]);
+              setItems([]); setStats(null); setNeedsReview(null); setAiAnalysis(null);
+              setProcessing(false);
+            }}
             className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
               source === 'xml'
                 ? 'bg-ocean-120 text-white'
@@ -2244,7 +2380,14 @@ export default function TaxRules() {
             {t('main.sourceXml')}
           </button>
           <button
-            onClick={() => { setSource('sped'); setFiles([]); setParseErrors([]); setSpedSummary(null); }}
+            onClick={() => {
+              if (eventSourceRef.current) { eventSourceRef.current.close(); eventSourceRef.current = null; }
+              setSource('sped'); setFiles([]); setContribFiles([]);
+              setParseErrors([]); setSpedSummary(null); setSpedProgress(null);
+              setQualityGateOpen(false); setRules([]); setDeterminations([]);
+              setItems([]); setStats(null); setNeedsReview(null); setAiAnalysis(null);
+              setProcessing(false);
+            }}
             className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
               source === 'sped'
                 ? 'bg-ocean-120 text-white'
@@ -2284,6 +2427,10 @@ export default function TaxRules() {
           setConfig={setConfig}
           spedOptions={spedOptions}
           setSpedOptions={setSpedOptions}
+          contribFiles={contribFiles}
+          setContribFiles={setContribFiles}
+          contribSpedOptions={contribSpedOptions}
+          setContribSpedOptions={setContribSpedOptions}
           onProcess={handleProcess}
           processing={processing}
           parseErrors={parseErrors}
@@ -2301,7 +2448,7 @@ export default function TaxRules() {
 
       {step === 'upload' && qualityGateOpen && (
         <SpedQualityGate
-          qualityStats={spedSummary?.qualityStats}
+          qualityStats={spedSummary?.fiscalQualityStats}
           onAcknowledge={() => {
             setQualityGateOpen(false);
             setStep('review');

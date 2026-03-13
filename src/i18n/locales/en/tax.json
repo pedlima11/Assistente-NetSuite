@@ -12,7 +12,17 @@
     "uniqueStats": "Unique CFOPs: {{cfops}} | Unique NCMs: {{ncms}} | UFs: {{ufs}}",
     "itemsWithWarnings": "{{count}} items with warnings",
     "rejections": "Rejections",
-    "codSitIgnored": "COD_SIT ignored"
+    "codSitIgnored": "COD_SIT ignored",
+    "contribTitle": "SPED Contributions",
+    "contribItemsAccepted": "Contrib items accepted",
+    "contribItemsRejected": "Contrib items rejected",
+    "mergeTitle": "Merge Fiscal + Contributions",
+    "matchesCodItem": "Match by codItem",
+    "matchesNumItem": "Match by numItem",
+    "fiscalFallbacks": "Fiscal fallback",
+    "standaloneContrib": "Contrib standalone",
+    "ambiguousSkips": "{{count}} ambiguous item(s) — not matched",
+    "blockMApproximate": "Approximate validation (based on tax lines, not final determinations)"
   },
   "qualityGate": {
     "title": "SPED Quality Diagnostic",
@@ -61,7 +71,7 @@
     "PARAMTYPE_MISSING": "Param type missing (ICMS-ST)"
   },
   "stepUpload": {
-    "spedLabel": "Drag SPED EFD files (.txt) here or click to select",
+    "spedLabel": "Drag SPED ICMS/IPI Contributions files (.txt) here or click to select",
     "spedSubtitle": "Accepts multiple .txt files from the same CNPJ",
     "spedOptionsTitle": "SPED EFD Options",
     "spedNoRegimeNote": "SPED does not report the supplier's tax regime. Rules will not be segmented by issuer regime.",
@@ -93,7 +103,13 @@
     "loadingNetSuiteData": "Loading NetSuite data...",
     "processFiles": "Process {{count}} file{{plural}}",
     "paramTypeLoadError": "Could not load Param Types from NetSuite",
-    "cbsIbsNoValidation": "CBS/IBS will be processed without name validation."
+    "cbsIbsNoValidation": "CBS/IBS will be processed without name validation.",
+    "contribLabel": "Drag SPED PIS/COFINS Contributions files (.txt) here or click to select",
+    "contribSubtitle": "Optional — PIS/COFINS with NAT_BC_CRED",
+    "contribOptionsTitle": "SPED Contributions Options",
+    "includeServices": "Include services (A100/A170)",
+    "includeOtherCredits": "Include other credits (F100)",
+    "processingMerged": "Processing fiscal + contrib merge..."
   },
   "ruleCard": {
     "ncmException": "NCM Exception",

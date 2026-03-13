@@ -6,6 +6,7 @@
     "noName": "Sin nombre",
     "existsInNetsuite": "Ya existe en NetSuite",
     "cannotEditHere": "Esta filial no puede ser editada aqui. Use NetSuite para modificar.",
+    "subtitle": "Complete los datos de la filial",
     "pendingFields": "Campos pendientes:",
     "close": "Cerrar",
     "deleteTitle": "Eliminar filial",
@@ -34,6 +35,7 @@
     "subsidiaryData": "Datos de la Filial"
   },
   "sections": {
+    "company": "Datos de la Empresa",
     "fiscal": "Fiscal",
     "address": "Direccion"
   },
@@ -78,7 +80,8 @@
     "existing": "NetSuite"
   },
   "tree": {
-    "empty": "Ninguna filial agregada"
+    "empty": "Ninguna filial agregada",
+    "dragHint": "Arrastre para reorganizar"
   },
   "validation": {
     "nameRequired": "Razon Social obligatoria",

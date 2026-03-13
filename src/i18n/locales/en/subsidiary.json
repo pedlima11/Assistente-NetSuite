@@ -6,6 +6,7 @@
     "noName": "No name",
     "existsInNetsuite": "Already exists in NetSuite",
     "cannotEditHere": "This subsidiary cannot be edited here. Use NetSuite to modify.",
+    "subtitle": "Fill in the subsidiary details",
     "pendingFields": "Pending fields:",
     "close": "Close",
     "deleteTitle": "Delete subsidiary",
@@ -34,6 +35,7 @@
     "subsidiaryData": "Subsidiary Data"
   },
   "sections": {
+    "company": "Company Details",
     "fiscal": "Fiscal",
     "address": "Address"
   },
@@ -78,7 +80,8 @@
     "existing": "NetSuite"
   },
   "tree": {
-    "empty": "No subsidiaries added"
+    "empty": "No subsidiaries added",
+    "dragHint": "Drag to rearrange"
   },
   "validation": {
     "nameRequired": "Business name is required",

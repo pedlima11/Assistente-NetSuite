@@ -12,7 +12,17 @@
     "uniqueStats": "CFOPs unicos: {{cfops}} | NCMs unicos: {{ncms}} | UFs: {{ufs}}",
     "itemsWithWarnings": "{{count}} items con avisos",
     "rejections": "Rechazos",
-    "codSitIgnored": "COD_SIT ignorados"
+    "codSitIgnored": "COD_SIT ignorados",
+    "contribTitle": "SPED Contribuciones",
+    "contribItemsAccepted": "Items contrib aceptados",
+    "contribItemsRejected": "Items contrib rechazados",
+    "mergeTitle": "Merge Fiscal + Contribuciones",
+    "matchesCodItem": "Match por codItem",
+    "matchesNumItem": "Match por numItem",
+    "fiscalFallbacks": "Fallback fiscal",
+    "standaloneContrib": "Contrib standalone",
+    "ambiguousSkips": "{{count}} item(s) ambiguo(s) — no emparejados",
+    "blockMApproximate": "Validacion aproximada (basada en tax lines, no en determinaciones finales)"
   },
   "qualityGate": {
     "title": "Diagnostico de Calidad del SPED",
@@ -61,7 +71,7 @@
     "PARAMTYPE_MISSING": "Param. tipo ausente (ICMS-ST)"
   },
   "stepUpload": {
-    "spedLabel": "Arrastre archivos SPED EFD (.txt) aqui o haga clic para seleccionar",
+    "spedLabel": "Arrastre archivos del SPED Contribuciones ICMS/IPI (.txt) aqui o haga clic para seleccionar",
     "spedSubtitle": "Acepta multiples archivos .txt del mismo CNPJ",
     "spedOptionsTitle": "Opciones del SPED EFD",
     "spedNoRegimeNote": "El SPED no informa el regimen del proveedor. Las reglas no seran segmentadas por regimen del emisor.",
@@ -93,7 +103,13 @@
     "loadingNetSuiteData": "Cargando datos de NetSuite...",
     "processFiles": "Procesar {{count}} archivo{{plural}}",
     "paramTypeLoadError": "No fue posible cargar Param Types de NetSuite",
-    "cbsIbsNoValidation": "CBS/IBS seran procesados sin validacion de nombres."
+    "cbsIbsNoValidation": "CBS/IBS seran procesados sin validacion de nombres.",
+    "contribLabel": "Arrastre archivos del SPED Contribuciones PIS/COFINS (.txt) aqui o haga clic para seleccionar",
+    "contribSubtitle": "Opcional — PIS/COFINS con NAT_BC_CRED",
+    "contribOptionsTitle": "Opciones del SPED Contribuciones",
+    "includeServices": "Incluir servicios (A100/A170)",
+    "includeOtherCredits": "Incluir otros creditos (F100)",
+    "processingMerged": "Procesando merge fiscal + contrib..."
   },
   "ruleCard": {
     "ncmException": "Excepcion NCM",

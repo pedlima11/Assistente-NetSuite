@@ -4,6 +4,7 @@
     "rootTitle": "Filial Raiz",
     "defaultTitle": "Filial",
     "noName": "Sem nome",
+    "subtitle": "Preencha os dados da subsidiary",
     "existsInNetsuite": "Ja existe no NetSuite",
     "cannotEditHere": "Esta filial nao pode ser editada aqui. Use o NetSuite para modificar.",
     "pendingFields": "Campos pendentes:",
@@ -34,6 +35,7 @@
     "subsidiaryData": "Dados da Filial"
   },
   "sections": {
+    "company": "Dados da Empresa",
     "fiscal": "Fiscal",
     "address": "Endereco"
   },
@@ -78,7 +80,8 @@
     "existing": "NetSuite"
   },
   "tree": {
-    "empty": "Nenhuma filial adicionada"
+    "empty": "Nenhuma filial adicionada",
+    "dragHint": "Arraste para reorganizar"
   },
   "validation": {
     "nameRequired": "Razao Social obrigatoria",

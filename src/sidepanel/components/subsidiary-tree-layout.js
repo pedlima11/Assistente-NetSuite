@@ -148,4 +148,4 @@ export function computeTreeLayout(nodes) {
   };
 }
 
-export { CARD_W, CARD_H };
+export { CARD_W, CARD_H, H_GAP, V_GAP, PADDING };

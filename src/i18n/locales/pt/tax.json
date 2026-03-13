@@ -12,7 +12,17 @@
     "uniqueStats": "CFOPs unicos: {{cfops}} | NCMs unicos: {{ncms}} | UFs: {{ufs}}",
     "itemsWithWarnings": "{{count}} itens com avisos",
     "rejections": "Rejeicoes",
-    "codSitIgnored": "COD_SIT ignorados"
+    "codSitIgnored": "COD_SIT ignorados",
+    "contribTitle": "SPED Contribuicoes",
+    "contribItemsAccepted": "Itens contrib aceitos",
+    "contribItemsRejected": "Itens contrib rejeitados",
+    "mergeTitle": "Merge Fiscal + Contribuicoes",
+    "matchesCodItem": "Match por codItem",
+    "matchesNumItem": "Match por numItem",
+    "fiscalFallbacks": "Fallback fiscal",
+    "standaloneContrib": "Contrib standalone",
+    "ambiguousSkips": "{{count}} item(ns) ambiguo(s) — nao casados",
+    "blockMApproximate": "Validacao aproximada (baseada em tax lines, nao em determinacoes finais)"
   },
   "qualityGate": {
     "title": "Diagnostico de Qualidade do SPED",
@@ -61,7 +71,7 @@
     "PARAMTYPE_MISSING": "Param. tipo ausente (ICMS-ST)"
   },
   "stepUpload": {
-    "spedLabel": "Arraste arquivos SPED EFD (.txt) aqui ou clique para selecionar",
+    "spedLabel": "Arraste arquivos do SPED Contribuicoes ICMS/IPI (.txt) aqui ou clique para selecionar",
     "spedSubtitle": "Aceita multiplos arquivos .txt do mesmo CNPJ",
     "spedOptionsTitle": "Opcoes do SPED EFD",
     "spedNoRegimeNote": "O SPED nao informa o regime do fornecedor. Regras nao serao segmentadas por regime do emissor.",
@@ -93,7 +103,13 @@
     "loadingNetSuiteData": "Carregando dados do NetSuite...",
     "processFiles": "Processar {{count}} arquivo{{plural}}",
     "paramTypeLoadError": "Nao foi possivel carregar Param Types do NetSuite",
-    "cbsIbsNoValidation": "CBS/IBS serao processados sem validacao de nomes."
+    "cbsIbsNoValidation": "CBS/IBS serao processados sem validacao de nomes.",
+    "contribLabel": "Arraste arquivos do SPED Contribuicoes PIS/COFINS (.txt) aqui ou clique para selecionar",
+    "contribSubtitle": "Opcional — PIS/COFINS com NAT_BC_CRED",
+    "contribOptionsTitle": "Opcoes do SPED Contribuicoes",
+    "includeServices": "Incluir servicos (A100/A170)",
+    "includeOtherCredits": "Incluir outros creditos (F100)",
+    "processingMerged": "Processando merge fiscal + contrib..."
   },
   "ruleCard": {
     "ncmException": "Excecao NCM",
