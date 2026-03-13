@@ -10,9 +10,9 @@
  *   0150 (participantes)
  *   0200 (catalogo de itens)
  *   A100 (cabecalho servicos — apenas contexto)
- *   A170 (itens servicos — NAT_BC_CRED em field[7])
+ *   A170 (itens servicos — NAT_BC_CRED em field[6])
  *   C100 (cabecalho documentos mercadorias — apenas contexto)
- *   C170 (itens mercadorias — sem NAT, usa fiscalCategory)
+ *   C170 (itens mercadorias — 37 campos com ICMS+IPI+PIS+COFINS, sem NAT_BC_CRED)
  *   C181 (PIS consolidado — NAT em field[2])
  *   C185 (COFINS consolidado — NAT em field[2])
  *   C191 (PIS aquisicao — NAT em field[2])
@@ -28,6 +28,7 @@ import {
   REJECTED_COD_SIT,
   buildAcceptedCodSit,
   createSpedReader,
+  detectSpedFileType,
 } from './sped-common.js';
 
 // Registros relevantes para Contribuicoes
@@ -158,6 +159,18 @@ export async function parseSpedContribStream(filePath, options = {}, callbacks =
     switch (regType) {
       // ── 0000: Info empresa (layout Contribuicoes) ───────────────────────
       case '0000': {
+        // Detectar tipo de arquivo para rejeitar SPED Fiscal no slot errado
+        const fileType = detectSpedFileType(fields);
+        if (fileType === 'fiscal') {
+          throw new Error(
+            'TIPO_ARQUIVO_INCORRETO: Arquivo SPED Fiscal (EFD ICMS/IPI) enviado como Contribuicoes. ' +
+            'Envie este arquivo no campo "SPED Fiscal".'
+          );
+        }
+        if (fileType === 'unknown') {
+          rawStats._fileTypeWarning = 'Tipo de arquivo SPED nao identificado no registro 0000. Continuando como Contribuicoes.';
+        }
+
         // |0000|COD_VER|TIPO_ESCRIT|IND_SIT_ESP|NUM_REC_ANTERIOR|
         //       DT_INI|DT_FIN|NOME|CNPJ|UF|COD_MUN|...
         // Diferenca critica: CNPJ=field[8], UF=field[9], COD_MUN=field[11]
@@ -243,7 +256,7 @@ export async function parseSpedContribStream(filePath, options = {}, callbacks =
         break;
       }
 
-      // ── A170: Itens servicos — NAT_BC_CRED em field[7] ─────────────────
+      // ── A170: Itens servicos — NAT_BC_CRED em field[6] ─────────────────
       case 'A170': {
         if (!currentDocA) break;
 
@@ -256,7 +269,7 @@ export async function parseSpedContribStream(filePath, options = {}, callbacks =
           codItem: (fields[2] || '').trim(),
           descrCompl: (fields[3] || '').trim(),
           vlItem: parseFloat(fields[4]) || 0,
-          natBcCred: (fields[7] || '').trim(),
+          natBcCred: (fields[6] || '').trim(),
           cstPis: (fields[8] || '').trim(),
           vlBcPis: parseFloat(fields[9]) || 0,
           aliqPis: parseFloat(fields[10]) || 0,
@@ -322,29 +335,35 @@ export async function parseSpedContribStream(filePath, options = {}, callbacks =
         break;
       }
 
-      // ── C170: Itens mercadorias (sem NAT_BC_CRED) ──────────────────────
+      // ── C170: Itens mercadorias (sem NAT_BC_CRED, 37 campos) ──────────
       case 'C170': {
         if (!currentDocC) break;
 
-        // Layout C170 EFD Contribuicoes (diferente do Fiscal!):
-        // |C170|NUM_ITEM|COD_ITEM|DESCR_COMPL|QTD|UNID|VL_ITEM|VL_DESC|
-        //       IND_MOV|CST_PIS|VL_BC_PIS|ALIQ_PIS|QUANT_BC_PIS|VL_PIS|
-        //       CST_COFINS|VL_BC_COFINS|ALIQ_COFINS|QUANT_BC_COFINS|VL_COFINS|
-        //       COD_CTA|CFOP
+        // Layout C170 EFD Contribuicoes — 37 campos (1-based), inclui ICMS+IPI:
+        // 01=REG  02=NUM_ITEM  03=COD_ITEM  04=DESCR_COMPL  05=QTD  06=UNID
+        // 07=VL_ITEM  08=VL_DESC  09=IND_MOV
+        // 10=CST_ICMS  11=CFOP  12=COD_NAT  13=VL_BC_ICMS  14=ALIQ_ICMS
+        // 15=VL_ICMS  16=VL_BC_ICMS_ST  17=ALIQ_ST  18=VL_ICMS_ST
+        // 19=IND_APUR  20=CST_IPI  21=COD_ENQ  22=VL_BC_IPI  23=ALIQ_IPI  24=VL_IPI
+        // 25=CST_PIS  26=VL_BC_PIS  27=ALIQ_PIS(%)  28=QUANT_BC_PIS
+        // 29=ALIQ_PIS_QUANT  30=VL_PIS
+        // 31=CST_COFINS  32=VL_BC_COFINS  33=ALIQ_COFINS(%)  34=QUANT_BC_COFINS
+        // 35=ALIQ_COFINS_QUANT  36=VL_COFINS  37=COD_CTA
+        // Fonte: Guia Pratico EFD-Contribuicoes RFB + VRI Consulting
         const rawItem = {
           numItem: (fields[1] || '').trim(),
           codItem: (fields[2] || '').trim(),
           descrCompl: (fields[3] || '').trim(),
           vlItem: parseFloat(fields[6]) || 0,
-          cfop: (fields[20] || '').trim(),
-          cstPis: (fields[9] || '').trim(),
-          vlBcPis: parseFloat(fields[10]) || 0,
-          aliqPis: parseFloat(fields[11]) || 0,
-          vlPis: parseFloat(fields[13]) || 0,
-          cstCofins: (fields[14] || '').trim(),
-          vlBcCofins: parseFloat(fields[15]) || 0,
-          aliqCofins: parseFloat(fields[16]) || 0,
-          vlCofins: parseFloat(fields[18]) || 0,
+          cfop: (fields[10] || '').trim(),
+          cstPis: (fields[24] || '').trim(),
+          vlBcPis: parseFloat(fields[25]) || 0,
+          aliqPis: parseFloat(fields[26]) || 0,
+          vlPis: parseFloat(fields[29]) || 0,
+          cstCofins: (fields[30] || '').trim(),
+          vlBcCofins: parseFloat(fields[31]) || 0,
+          aliqCofins: parseFloat(fields[32]) || 0,
+          vlCofins: parseFloat(fields[35]) || 0,
           natBcCred: '',  // C170 nao tem NAT_BC_CRED
           _registerType: 'C170',
         };
@@ -508,7 +527,7 @@ export async function parseSpedContribStream(filePath, options = {}, callbacks =
           codItem: (fields[3] || '').trim(),
           descrCompl: (fields[18] || '').trim(),  // DESC_DOC_OPER
           vlItem: parseFloat(fields[5]) || 0,
-          natBcCred: (fields[15] || '').trim(),
+          natBcCred: (fields[14] || '').trim(),
           cstPis: (fields[6] || '').trim(),
           vlBcPis: parseFloat(fields[7]) || 0,
           aliqPis: parseFloat(fields[8]) || 0,

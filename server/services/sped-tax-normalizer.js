@@ -296,6 +296,7 @@ export function normalizeItem(rawItem, docCtx, lookups, options = {}) {
     taxes,
     // Dados do item original para rastreabilidade
     codItem: rawItem.codItem,
+    numItem: rawItem.numItem || '',
     descrCompl: rawItem.descrCompl,
     vlItem: rawItem.vlItem,
     _rawLine: rawItem._rawLine || null,

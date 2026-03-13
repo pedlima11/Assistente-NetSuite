@@ -149,6 +149,7 @@ export function normalizeContribItem(rawItem, docCtx, lookups, meta, options = {
     dhEmi: docCtx.dtDoc,
     taxes,
     codItem: rawItem.codItem || '',
+    numItem: rawItem.numItem || '',
     descrCompl: rawItem.descrCompl || '',
     vlItem: rawItem.vlItem || 0,
     _registerType: rawItem._registerType,

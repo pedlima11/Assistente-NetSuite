@@ -1,16 +1,14 @@
 /**
- * Merge SPED Fiscal + Contribuicoes.
+ * Merge SPED Fiscal + Contribuicoes no nivel de item.
  *
- * Combina regras ICMS/IPI do Fiscal com PIS/COFINS do Contribuicoes
- * por contextSignature em dois passes:
- *   Pass 1: Match preciso (com fiscalCategory)
- *   Pass 2: Match fallback (sem fiscalCategory)
+ * Combina items ICMS/IPI do Fiscal com PIS/COFINS do Contribuicoes
+ * por match em 2 camadas (codItem → numItem), ambas com disciplina de unicidade.
  *
- * Sem match: PIS/COFINS do Fiscal vira fiscal_fallback.
- * Contrib sem match no Fiscal: regras standalone PIS/COFINS-only.
+ * Motor agnostico: nao sugere, nao infere. Le os dois arquivos e mostra
+ * como as notas foram escrituradas, para o usuario decidir.
  */
 
-import { classifyCFOP, normalizeCnpj } from '../../shared/tax-rule-core.js';
+import { classifyCFOP } from '../../shared/tax-rule-core.js';
 
 /**
  * Gera contextSignature para uma regra.
@@ -47,159 +45,125 @@ export function contextSignature(rule, options = {}) {
 }
 
 /**
- * Merge resultados do Fiscal e Contribuicoes.
+ * Merge itens SPED Fiscal + Contribuicoes no nivel de item.
  *
- * @param {Object} fiscalResult - { rules, determinations, stats, qualityStats, ... }
- * @param {Object} contribResult - { rules, determinations, stats, qualityStats, ... }
- * @param {Object} [options]
- * @returns {{ rules, determinations, stats, mergeStats, warnings }}
+ * Estrategia de match em 2 camadas (dentro do mesmo documento/nfeKey):
+ *   1. nfeKey + codItem (produto, univoco) → _mergeSource: 'matched_coditem'
+ *   2. nfeKey + numItem (sequencial, univoco) → _mergeSource: 'matched_numitem'
+ *      Ambiguo (>1 candidato em qualquer camada) → nao casa, contabiliza ambiguousSkips.
+ *
+ * Consolidados (C181/C185/C191/C195) sem codItem/numItem → sempre standalone.
+ * A170/F100 sem match fiscal → standalone (NAO entram na geracao de regras de
+ * entrada de mercadoria — ficam em visao auxiliar para o usuario decidir).
+ *
+ * Quando match:
+ *   - Preserva ICMS/IPI/CBS/IBS/IS do fiscal
+ *   - Substitui PIS/COFINS pelo contrib (com natBcCred)
+ *
+ * @param {Object[]} fiscalItems
+ * @param {Object[]} contribItems
+ * @returns {{ items: Object[], mergeStats: Object }}
  */
-export function mergeResults(fiscalResult, contribResult, options = {}) {
-  const warnings = [];
+export function mergeItems(fiscalItems, contribItems) {
+  const matchableContrib = [];
+  const standaloneContrib = [];
 
-  // ── Validacao basica ────────────────────────────────────────────────────
-
-  if (fiscalResult.companyInfo && contribResult.companyInfo) {
-    const fiscalCnpj = normalizeCnpj(fiscalResult.companyInfo.cnpj);
-    const contribCnpj = normalizeCnpj(contribResult.companyInfo.cnpj);
-    if (fiscalCnpj && contribCnpj && fiscalCnpj !== contribCnpj) {
-      warnings.push(`CNPJ divergente: Fiscal=${fiscalCnpj}, Contrib=${contribCnpj}`);
+  for (const ci of contribItems) {
+    if (!ci.codItem && !ci.numItem) {
+      standaloneContrib.push({ ...ci, _mergeSource: 'contrib_standalone' });
+      continue;
     }
+    matchableContrib.push(ci);
   }
 
-  // ── Indexar regras por signature ────────────────────────────────────────
-
-  // Fiscal: indexar por signature base
-  const fiscalRulesBySig = new Map();
-  for (const rule of fiscalResult.rules) {
-    const sig = contextSignature(rule);
-    if (!fiscalRulesBySig.has(sig)) fiscalRulesBySig.set(sig, []);
-    fiscalRulesBySig.get(sig).push(rule);
+  const contribByDoc = new Map();
+  for (const ci of matchableContrib) {
+    if (!contribByDoc.has(ci.nfeKey)) contribByDoc.set(ci.nfeKey, []);
+    contribByDoc.get(ci.nfeKey).push(ci);
   }
 
-  // Fiscal: indexar determinacoes por ruleExternalId
-  const fiscalDetsByRule = new Map();
-  for (const det of fiscalResult.determinations) {
-    if (!fiscalDetsByRule.has(det.ruleExternalId)) {
-      fiscalDetsByRule.set(det.ruleExternalId, []);
-    }
-    fiscalDetsByRule.get(det.ruleExternalId).push(det);
-  }
+  const mergedItems = [];
+  let matchesByCodItem = 0;
+  let matchesByNumItem = 0;
+  let ambiguousSkips = 0;
+  let fiscalFallbacks = 0;
 
-  // Contrib: indexar determinacoes por ruleExternalId
-  const contribDetsByRule = new Map();
-  for (const det of contribResult.determinations) {
-    if (!contribDetsByRule.has(det.ruleExternalId)) {
-      contribDetsByRule.set(det.ruleExternalId, []);
-    }
-    contribDetsByRule.get(det.ruleExternalId).push(det);
-  }
+  for (const fi of fiscalItems) {
+    const docContribs = contribByDoc.get(fi.nfeKey);
 
-  // ── Merge ───────────────────────────────────────────────────────────────
+    if (docContribs && docContribs.length > 0) {
+      let matchIdx = -1;
+      let matchType = '';
+      let wasAmbiguous = false;
 
-  const mergedRules = [];
-  const mergedDets = [];
-  const matchedContribRuleIds = new Set();
-  let mergeMatchCount = 0;
-  let fallbackCount = 0;
-  let standaloneContribCount = 0;
-
-  // Para cada regra Fiscal: remover PIS/COFINS e injetar do Contrib
-  for (const fiscalRule of fiscalResult.rules) {
-    mergedRules.push(fiscalRule);
-
-    const fiscalDets = fiscalDetsByRule.get(fiscalRule.externalId) || [];
-
-    // Separar dets: ICMS/IPI (manter) vs PIS/COFINS (substituir)
-    const nonPisCofins = [];
-    const pisCofins = [];
-    for (const det of fiscalDets) {
-      if (det.codigoImposto === 'PIS_BR' || det.codigoImposto === 'COFINS_BR') {
-        pisCofins.push(det);
-      } else {
-        nonPisCofins.push(det);
-      }
-    }
-
-    // Manter ICMS/IPI/CBS/IBS/IS
-    for (const det of nonPisCofins) {
-      det._mergeSource = 'fiscal';
-      mergedDets.push(det);
-    }
-
-    // Tentar match com Contrib
-    const sig = contextSignature(fiscalRule);
-    let matched = false;
-
-    // Pass 1: match preciso (iterar contrib rules e checar se signature match)
-    for (const contribRule of contribResult.rules) {
-      if (matchedContribRuleIds.has(contribRule.externalId)) continue;
-      const contribSig = contextSignature(contribRule);
-      if (contribSig === sig) {
-        // Match found
-        const contribDets = contribDetsByRule.get(contribRule.externalId) || [];
-        for (const det of contribDets) {
-          det.ruleExternalId = fiscalRule.externalId;
-          det._mergeSource = 'contrib';
-          mergedDets.push(det);
+      // Layer 1: codItem — so se univoco
+      if (fi.codItem) {
+        const codCandidates = docContribs.filter(ci => ci.codItem === fi.codItem);
+        if (codCandidates.length === 1) {
+          matchIdx = docContribs.indexOf(codCandidates[0]);
+          matchType = 'matched_coditem';
+        } else if (codCandidates.length > 1) {
+          wasAmbiguous = true;
         }
-        matchedContribRuleIds.add(contribRule.externalId);
-        matched = true;
-        mergeMatchCount++;
-        break;
+      }
+
+      // Layer 2: numItem — so se univoco
+      if (matchIdx < 0 && fi.numItem) {
+        const candidates = docContribs.filter(ci => ci.numItem === fi.numItem);
+        if (candidates.length === 1) {
+          matchIdx = docContribs.indexOf(candidates[0]);
+          matchType = 'matched_numitem';
+        } else if (candidates.length > 1) {
+          wasAmbiguous = true;
+        }
+      }
+
+      // Max 1 ambiguous skip por item fiscal
+      if (matchIdx < 0 && wasAmbiguous) ambiguousSkips++;
+
+      if (matchIdx >= 0) {
+        const ci = docContribs.splice(matchIdx, 1)[0];
+        if (docContribs.length === 0) contribByDoc.delete(fi.nfeKey);
+
+        const nonPisCofins = fi.taxes.filter(t => t.type !== 'PIS' && t.type !== 'COFINS');
+        const contribPisCofins = ci.taxes.filter(t => t.type === 'PIS' || t.type === 'COFINS');
+
+        mergedItems.push({
+          ...fi,
+          taxes: [...nonPisCofins, ...contribPisCofins],
+          _mergeSource: matchType,
+        });
+        if (matchType === 'matched_coditem') matchesByCodItem++;
+        else matchesByNumItem++;
+        continue;
       }
     }
 
-    if (!matched) {
-      // Manter PIS/COFINS Fiscal como fallback
-      for (const det of pisCofins) {
-        det._mergeSource = 'fiscal_fallback';
-        mergedDets.push(det);
-      }
-      if (pisCofins.length > 0) fallbackCount++;
-    }
+    // Sem match → manter PIS/COFINS fiscal como fallback
+    const hasPisCofins = fi.taxes.some(t => t.type === 'PIS' || t.type === 'COFINS');
+    mergedItems.push({
+      ...fi,
+      _mergeSource: hasPisCofins ? 'fiscal_fallback' : 'fiscal_only',
+    });
+    if (hasPisCofins) fiscalFallbacks++;
   }
 
-  // Contrib rules sem match → standalone PIS/COFINS-only
-  for (const contribRule of contribResult.rules) {
-    if (matchedContribRuleIds.has(contribRule.externalId)) continue;
-
-    // Verificar se tem CFOP invalido → standalone/needs_review
-    const cfopRaw = (contribRule.cfop || '').replace(/\./g, '');
-    if (!cfopRaw || !/^\d{4}$/.test(cfopRaw)) {
-      contribRule._needsReview = true;
+  // Contrib matchable restante → standalone
+  for (const remaining of contribByDoc.values()) {
+    for (const ci of remaining) {
+      standaloneContrib.push({ ...ci, _mergeSource: 'contrib_standalone' });
     }
-
-    contribRule._standaloneContrib = true;
-    mergedRules.push(contribRule);
-
-    const contribDets = contribDetsByRule.get(contribRule.externalId) || [];
-    for (const det of contribDets) {
-      det._mergeSource = 'contrib';
-      mergedDets.push(det);
-    }
-    standaloneContribCount++;
   }
-
-  // ── Stats ───────────────────────────────────────────────────────────────
 
   return {
-    rules: mergedRules,
-    determinations: mergedDets,
-    stats: {
-      totalRules: mergedRules.length,
-      totalDeterminations: mergedDets.length,
-      fiscalRules: fiscalResult.rules.length,
-      contribRules: contribResult.rules.length,
-      genericRules: mergedRules.filter(r => !r._isException).length,
-      exceptionRules: mergedRules.filter(r => r._isException).length,
-    },
+    items: [...mergedItems, ...standaloneContrib],
     mergeStats: {
-      mergeMatches: mergeMatchCount,
-      fiscalFallbacks: fallbackCount,
-      standaloneContrib: standaloneContribCount,
+      mergeMatches: matchesByCodItem + matchesByNumItem,
+      matchesByCodItem,
+      matchesByNumItem,
+      ambiguousSkips,
+      fiscalFallbacks,
+      standaloneContrib: standaloneContrib.length,
     },
-    companyInfo: fiscalResult.companyInfo || contribResult.companyInfo,
-    warnings,
   };
 }

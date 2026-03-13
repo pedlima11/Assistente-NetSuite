@@ -159,6 +159,55 @@ export function buildAcceptedCodSit(options = {}) {
   return accepted;
 }
 
+// ── Deteccao de tipo de arquivo SPED ─────────────────────────────────────
+
+/**
+ * Helpers para deteccao de tipo de arquivo.
+ */
+function is8DigitDate(v) {
+  return /^\d{8}$/.test((v || '').trim());
+}
+
+function is14DigitCnpj(v) {
+  return /^\d{14}$/.test((v || '').replace(/\D/g, ''));
+}
+
+/**
+ * Detecta o tipo de arquivo SPED pela linha 0000 (ja parseada via splitLine).
+ *
+ * SPED Fiscal (EFD ICMS/IPI):
+ *   |0000|COD_VER|COD_FIN|DT_INI|DT_FIN|NOME|CNPJ|CPF|UF|IE|COD_MUN|...
+ *   fields[3]=DT_INI (8 dig), fields[6]=CNPJ (14 dig)
+ *
+ * SPED Contribuicoes (EFD PIS/COFINS):
+ *   |0000|COD_VER|TIPO_ESCRIT|IND_SIT_ESP|NUM_REC_ANTERIOR|DT_INI|DT_FIN|NOME|CNPJ|UF|COD_MUN|...
+ *   fields[5]=DT_INI (8 dig), fields[8]=CNPJ (14 dig)
+ *
+ * @param {string[]} fields - Campos do registro 0000 (retorno de splitLine)
+ * @returns {'fiscal'|'contrib'|'unknown'}
+ */
+export function detectSpedFileType(fields) {
+  if (!Array.isArray(fields) || fields[0] !== '0000' || fields.length < 9) {
+    return 'unknown';
+  }
+
+  const looksFiscal = is8DigitDate(fields[3]) && is14DigitCnpj(fields[6]);
+  const looksContrib = is8DigitDate(fields[5]) && is14DigitCnpj(fields[8]);
+
+  if (looksFiscal && !looksContrib) return 'fiscal';
+  if (looksContrib && !looksFiscal) return 'contrib';
+
+  // Ambos batem: desambiguar por fields[4]
+  // Fiscal: fields[4]=DT_FIN (8-digit date)
+  // Contrib: fields[4]=NUM_REC_ANTERIOR (vazio ou numerico longo, nao date)
+  if (looksFiscal && looksContrib) {
+    if (is8DigitDate(fields[4])) return 'fiscal';
+    return 'contrib';
+  }
+
+  return 'unknown';
+}
+
 // ── Streaming helpers ────────────────────────────────────────────────────────
 
 /**

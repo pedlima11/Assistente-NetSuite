@@ -16,6 +16,7 @@ import {
   buildAcceptedCodSit,
   createSpedReader,
   validateCompanyInfo,
+  detectSpedFileType,
 } from './sped-common.js';
 
 // Re-export para manter compatibilidade com imports existentes
@@ -78,6 +79,15 @@ export async function parseSpedStream(filePath, options = {}, callbacks = {}) {
 
     switch (regType) {
       case '0000': {
+        // Detectar tipo de arquivo para rejeitar SPED Contribuicoes no slot errado
+        const fileType = detectSpedFileType(fields);
+        if (fileType === 'contrib') {
+          throw new Error(
+            'TIPO_ARQUIVO_INCORRETO: Arquivo SPED Contribuicoes (EFD PIS/COFINS) enviado como Fiscal. ' +
+            'Envie este arquivo no campo "SPED Contribuicoes".'
+          );
+        }
+
         // |0000|COD_VER|COD_FIN|DT_INI|DT_FIN|NOME|CNPJ|CPF|UF|IE|COD_MUN|...
         companyInfo = {
           cnpj: (fields[6] || '').trim(),

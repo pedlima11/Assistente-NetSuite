@@ -10,7 +10,7 @@ import { parseSpedContribStream } from '../parsers/sped-contrib-parser.js';
 import { normalizeItem } from '../services/sped-tax-normalizer.js';
 import { normalizeContribItem } from '../services/sped-contrib-normalizer.js';
 import { RuleAccumulator } from '../services/sped-rule-accumulator.js';
-import { mergeResults } from '../services/sped-merge.js';
+import { mergeItems } from '../services/sped-merge.js';
 import { validateBlockM } from '../services/sped-block-m-validator.js';
 import { normalizeCnpj } from '../../shared/tax-rule-core.js';
 import { buildStats } from '../services/tax-stats-builder.js';
@@ -1058,7 +1058,7 @@ async function processSpedMergedJob(jobId, fiscalFiles, contribFiles, options) {
 
     for (let i = 0; i < fiscalFiles.length; i++) {
       const file = fiscalFiles[i];
-      const pct = Math.round((i / fiscalFiles.length) * 30);
+      const pct = fiscalFiles.length > 0 ? Math.round((i / fiscalFiles.length) * 30) : 0;
       job.progress = { phase: 'fiscal', percent: pct, detail: `Fiscal: ${file.originalname}...` };
 
       const { rawStats, companyInfo } = await parseSpedStream(file.path, options, {
@@ -1096,7 +1096,7 @@ async function processSpedMergedJob(jobId, fiscalFiles, contribFiles, options) {
 
     for (let i = 0; i < contribFiles.length; i++) {
       const file = contribFiles[i];
-      const pct = 35 + Math.round((i / contribFiles.length) * 30);
+      const pct = contribFiles.length > 0 ? 35 + Math.round((i / contribFiles.length) * 30) : 35;
       job.progress = { phase: 'contrib', percent: pct, detail: `Contrib: ${file.originalname}...` };
 
       const { rawStats, companyInfo, blockM } = await parseSpedContribStream(file.path, options, {
@@ -1128,27 +1128,61 @@ async function processSpedMergedJob(jobId, fiscalFiles, contribFiles, options) {
     // Fase 3: Merge
     job.progress = { phase: 'merge', percent: 70, detail: 'Mesclando Fiscal + Contribuicoes...' };
 
-    const merged = mergeResults(fiscalResult, contribResult, options);
+    const merged = mergeItems(fiscalResult.items || [], contribResult.items || []);
 
-    // Fase 4: Block M validation (determinations vazias — contrib mode futuro)
+    // Fase 4: Block M validation (aproximada — taxes dos items, nao determinacoes)
     job.progress = { phase: 'blockM', percent: 85, detail: 'Validando contra Bloco M...' };
 
-    const blockMValidation = validateBlockM([], allBlockM);
+    const pisCofinsForBlockM = merged.items
+      .flatMap(item => (item.taxes || [])
+        .filter(t => (t.type === 'PIS' || t.type === 'COFINS') && t.natBcCred)
+        .map(t => ({
+          codigoImposto: t.type === 'PIS' ? 'PIS_BR' : 'COFINS_BR',
+          natBcCred: t.natBcCred || '',
+          aliquota: t.aliq || 0,
+          _bcAccum: t.bc || 0,
+          _mergeSource: item._mergeSource,
+        }))
+      );
+    const blockMValidation = validateBlockM(pisCofinsForBlockM, allBlockM);
 
     job.progress = { phase: 'finalizing', percent: 95, detail: 'Gerando resultado final...' };
 
+    // Normaliza nome: trim, lowercase, collapse spaces, remove acentos
+    const normName = (s) => (s || '').trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ');
+
+    const mergeWarnings = [...(fiscalResult.warnings || []), ...(contribResult.warnings || [])];
+    if (fiscalCompanyInfo && contribCompanyInfo) {
+      const fCnpj = (fiscalCompanyInfo.cnpj || '').replace(/\D/g, '');
+      const cCnpj = (contribCompanyInfo.cnpj || '').replace(/\D/g, '');
+      if (fCnpj && cCnpj && fCnpj !== cCnpj) {
+        mergeWarnings.push(`CNPJ_DIVERGENTE: Fiscal=${fiscalCompanyInfo.cnpj}, Contrib=${contribCompanyInfo.cnpj}`);
+      }
+      if (fiscalCompanyInfo.nome && contribCompanyInfo.nome &&
+          normName(fiscalCompanyInfo.nome) !== normName(contribCompanyInfo.nome)) {
+        mergeWarnings.push(`NOME_DIVERGENTE: Fiscal="${fiscalCompanyInfo.nome}", Contrib="${contribCompanyInfo.nome}"`);
+      }
+    }
+
     job.result = {
-      items: [...(fiscalResult.items || []), ...(contribResult.items || [])],
-      stats: merged.stats,
+      items: merged.items,
+      stats: {
+        totalItems: merged.items.length,
+        fiscalItems: (fiscalResult.items || []).length,
+        contribItems: (contribResult.items || []).length,
+      },
       mergeStats: merged.mergeStats,
       qualityStats: {
         fiscal: fiscalResult.qualityStats,
         contrib: contribResult.qualityStats,
       },
       rawStats: { fiscal: fiscalRawStats, contrib: contribRawStats },
-      companyInfo: merged.companyInfo,
+      companyInfo: fiscalCompanyInfo || contribCompanyInfo,
       blockMValidation,
-      warnings: [...(fiscalResult.warnings || []), ...(contribResult.warnings || []), ...(merged.warnings || [])],
+      needsReview: [...(fiscalResult.needsReview || []), ...(contribResult.needsReview || [])],
+      warnings: mergeWarnings,
       source: 'merged',
     };
 
